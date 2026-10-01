@@ -48,7 +48,6 @@ $Global:JidemPlaces = @(
     New-JidemPlace 'publications'   'JIDEM' (Get-JidemAcademic 'Publications')       'Published and submitted work'
     New-JidemPlace 'analysis'       'JIDEM' (Get-JidemAcademic 'Analysis')           'Analysis'
     New-JidemPlace 'datasets'       'JIDEM' (Get-JidemAcademic 'Data')               'Data'
-    New-JidemPlace 'archives'       'JIDEM' (Get-JidemAcademic 'Archive')            'Academic archive'
 
     # --- JIDEM: development ---
     New-JidemPlace 'development'    'JIDEM' @("$d\Development")                      'Development root'
