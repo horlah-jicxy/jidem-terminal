@@ -10,6 +10,7 @@ Command layer for the two Windows accounts (JIDEM and MAKIN).
 | `Jidem.Projects.ps1` | Phase 3 projects: `projects`, `openproject`, `projectinfo`, `projectnew`. |
 | `Jidem.Git.ps1` | Phase 4 read-only git: `gitstatus`, `gitchanges`, `gitlog`, `gitbranch`, `gitroot`. |
 | `Jidem.Academia.ps1` | Phase 5 academic workflow (JIDEM): `dissertation`, `research`, `writing`, `fieldwork`, `publications`, `analysis`, `datasets` now show a summary; `-Code` opens VS Code, `-Quiet` just jumps. Load last. |
+| `Jidem.Teaching.ps1` | Phase 6 teaching workflow (MAKIN): `teach` overview plus summaries for `courses`, `ta`, `teaching`, `university`, `administration`, `currentwork`. Load last, MAKIN only. |
 
 `$PROFILE` (both accounts):
 
