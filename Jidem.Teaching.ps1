@@ -8,6 +8,10 @@
 # Commands:
 #   teach                 go to UC-Merced and show an overview: folders, current course,
 #                         recent work, and what is waiting in the Shared bridge
+#   coursenew "IH 211" [-Term "Fall 2024"]
+#                         create TA\<course> with Syllabus, Materials, Assignments,
+#                         Attendance, Grades, Reports (-WhatIf previews; never overwrites)
+#   course [name]         list your course folders; with a (partial) name, go to one
 #   courses  ta  teaching  university  administration  admin  currentwork
 #                         go there and show a summary (contents most recently active
 #                         first, files modified in the last 14 days)
@@ -28,6 +32,9 @@ $Global:JidemCurrentCourse = 'ANTH 005'
 
 $Global:JidemSharedBridge = 'C:\Users\Public\Documents\Shared'
 
+# Subfolders created inside each new course folder by coursenew.
+$Global:JidemCourseFolders = @('Syllabus', 'Materials', 'Assignments', 'Attendance', 'Grades', 'Reports')
+
 # command name -> heading shown in the summary
 $Global:JidemTeachAreas = [ordered]@{
     courses        = 'COURSES'
@@ -47,12 +54,32 @@ function Resolve-JidemTeachPath([string]$Name) {
     $place.Paths | Where-Object { Test-Path -LiteralPath $_ -PathType Container } | Select-Object -First 1
 }
 
+function Get-JidemCourseFolders {
+    # Course folders live directly inside UC-Merced\TA.
+    $ta = Resolve-JidemTeachPath 'ta'
+    if (-not $ta) { return @() }
+    @(Get-ChildItem -LiteralPath $ta -Directory -ErrorAction SilentlyContinue |
+      Where-Object { -not $_.Name.StartsWith('.') } | Sort-Object Name)
+}
+
+function Find-JidemCourse([string]$Query) {
+    # "ANTH 005" or "anth-005" or just "005" all match the folder ANTH-005 (or ANTH-005_Fall-2025).
+    $q = ($Query.Trim() -replace '\s+', '-')
+    $all = @(Get-JidemCourseFolders)
+    $exact = @($all | Where-Object { $_.Name -ieq $q })
+    if ($exact.Count -eq 1) { return $exact }
+    @($all | Where-Object { $_.Name -like "*$q*" })
+}
+
 function Show-JidemTeachArea([string]$Title, [string]$Path, [switch]$Overview) {
     Write-JidemBanner $Title
 
     if ($Overview) {
         Write-Host 'CURRENT COURSE' -ForegroundColor Yellow
         Write-Host "  $($Global:JidemCurrentCourse)"
+        $cf = @(Find-JidemCourse $Global:JidemCurrentCourse)
+        if ($cf.Count -ge 1) { Write-Host "  Folder: TA\$($cf[0].Name)   (go there: course $($Global:JidemCurrentCourse))" -ForegroundColor DarkGray }
+        else { Write-Host "  No folder yet. Create one with: coursenew `"$($Global:JidemCurrentCourse)`"" -ForegroundColor DarkGray }
         Write-Host ''
     }
 
@@ -143,6 +170,82 @@ function Enter-JidemTeachArea {
 function teach {
     param([switch]$Code, [switch]$Quiet)
     Enter-JidemTeachArea 'school' 'TEACHING' -Overview -Code:$Code -Quiet:$Quiet
+}
+
+function course {
+    # course            list course folders in TA
+    # course <name>     go to one (partial names work: course 211)   [-Code opens VS Code]
+    param([string]$Name, [switch]$Code)
+    if ($Global:JidemAccount -ne 'MAKIN') {
+        Write-Host "'course' is assigned to the MAKIN account." -ForegroundColor Yellow
+        return
+    }
+    $courses = @(Get-JidemCourseFolders)
+    if (-not $courses.Count) {
+        Write-Host 'No course folders yet. Create one with: coursenew "ANTH 005"' -ForegroundColor Yellow
+        return
+    }
+    if (-not $Name) {
+        Write-Host 'COURSES (in TA)' -ForegroundColor Cyan
+        foreach ($c in $courses) {
+            $files = @(Get-JidemFiles $c.FullName)
+            $latest = $files | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+            Write-Host ('  {0,-28}' -f $c.Name) -NoNewline -ForegroundColor Yellow
+            Write-Host ('{0,5} files   {1}' -f $files.Count, $(if ($latest) { Format-Age $latest.LastWriteTime } else { 'empty' })) -ForegroundColor DarkGray
+        }
+        Write-Host 'Go to one with: course <name>' -ForegroundColor DarkGray
+        return
+    }
+    $hit = @(Find-JidemCourse $Name)
+    if (-not $hit.Count) { Write-Host "No course folder matches '$Name'. Run 'course' to see the list." -ForegroundColor Yellow; return }
+    if ($hit.Count -gt 1) {
+        Write-Host "'$Name' matches more than one course:" -ForegroundColor Yellow
+        foreach ($c in $hit) { Write-Host "  $($c.Name)" }
+        return
+    }
+    Set-Location -LiteralPath $hit[0].FullName
+    Show-JidemTeachArea ("COURSE  " + $hit[0].Name) $hit[0].FullName
+    if ($Code) {
+        if (Get-Command code -ErrorAction SilentlyContinue) { code . }
+        else { Write-Host "VS Code ('code') is not on PATH." -ForegroundColor Yellow }
+    }
+}
+
+function coursenew {
+    # coursenew "IH 211" [-Term "Fall 2024"] [-WhatIf]
+    # Creates UC-Merced\TA\<course> (spaces become hyphens; -Term is appended after an underscore).
+    [CmdletBinding(SupportsShouldProcess = $true)]
+    param([Parameter(Mandatory = $true, Position = 0)][string]$Course, [string]$Term)
+    if ($Global:JidemAccount -ne 'MAKIN') {
+        Write-Host "Courses are assigned to the MAKIN account (you are in $($Global:JidemAccount))." -ForegroundColor Yellow
+        return
+    }
+    $ta = Resolve-JidemTeachPath 'ta'
+    if (-not $ta) {
+        Write-Host "TA folder not found. Expected: $($Global:JidemDocs)\UC-Merced\TA" -ForegroundColor Yellow
+        return
+    }
+    $bad = '[\\/:*?"<>|]'
+    if ($Course -match $bad -or ($Term -and $Term -match $bad)) {
+        Write-Host 'Names cannot contain  \ / : * ? " < > |' -ForegroundColor Yellow
+        return
+    }
+    $folderName = ($Course.Trim() -replace '\s+', '-')
+    if ($Term) { $folderName += '_' + ($Term.Trim() -replace '\s+', '-') }
+    $path = Join-Path $ta $folderName
+    if (Test-Path -LiteralPath $path) {
+        Write-Host "Already exists: $path" -ForegroundColor Yellow
+        return
+    }
+    if ($PSCmdlet.ShouldProcess($path, 'Create course folder with subfolders and README.md')) {
+        New-Item -ItemType Directory -Path $path | Out-Null
+        foreach ($sub in $Global:JidemCourseFolders) { New-Item -ItemType Directory -Path (Join-Path $path $sub) | Out-Null }
+        $title = if ($Term) { "$($Course.Trim()) - $($Term.Trim())" } else { $Course.Trim() }
+        Set-Content -LiteralPath (Join-Path $path 'README.md') -Value "# $title" -Encoding UTF8
+        Write-Host "Created: $path" -ForegroundColor Green
+        foreach ($sub in $Global:JidemCourseFolders) { Write-Host "  $sub" -ForegroundColor DarkGray }
+        Write-Host "Go there with: course $Course" -ForegroundColor DarkGray
+    }
 }
 
 foreach ($area in $Global:JidemTeachAreas.Keys) {
