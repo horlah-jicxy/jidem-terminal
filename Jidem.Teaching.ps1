@@ -18,8 +18,8 @@
 #   <command> -Code       also open the folder in VS Code
 #   <command> -Quiet      just go there, no summary
 #
-# These REPLACE the plain jump commands of the same names. Read-only: nothing is
-# created, changed, or deleted.
+# These REPLACE the plain jump commands of the same names. Only coursenew creates
+# anything (new folders, never overwrites); everything else is read-only.
 # ==============================================================================
 
 if (-not (Get-Command Invoke-JidemGo -ErrorAction SilentlyContinue)) {
