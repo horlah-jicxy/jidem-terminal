@@ -50,7 +50,7 @@ function Show-JidemArea([string]$Title, [string]$Path) {
 
     # --- Contents: subfolders, most recently active first ---
     $folders = @(Get-ChildItem -LiteralPath $Path -Directory -Force -ErrorAction SilentlyContinue |
-                 Where-Object { $Global:JidemIgnore -notcontains $_.Name })
+                 Where-Object { $Global:JidemIgnore -notcontains $_.Name -and -not $_.Name.StartsWith('.') })
     $loose = @(Get-ChildItem -LiteralPath $Path -File -Force -ErrorAction SilentlyContinue)
 
     $rows = foreach ($f in $folders) {
