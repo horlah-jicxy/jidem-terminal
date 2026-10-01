@@ -186,7 +186,7 @@ function recent {
     $opts = @{ Since = (Get-Date).AddDays(-$Days); Top = $Top }
     if ($Extension) { $opts.Extension = $Extension }
     if ($Path)      { $opts.Path = @((Resolve-Path -LiteralPath $Path).Path) }
-    $files = Get-JidemRecent @args
+    $files = Get-JidemRecent @opts
     if (-not $files.Count) { Write-Host "Nothing modified in the last $Days days." -ForegroundColor DarkGray; return }
     Show-JidemFileList $files
 }
