@@ -7,7 +7,7 @@
 # These commands REPLACE the plain jump commands of the same name. Each one still moves
 # you into the folder, and now also shows a summary of it:
 #
-#   dissertation  research  writing  fieldwork  publications  analysis  datasets
+#   dissertation  research  writing  fieldwork  publications  papers  analysis  datasets
 #
 #   <command>          go there and show: contents (most recently active first),
 #                      files modified in the last 14 days, and git state
@@ -29,6 +29,7 @@ $Global:JidemAreas = [ordered]@{
     writing      = 'WRITING'
     fieldwork    = 'FIELDWORK'
     publications = 'PUBLICATIONS'
+    papers       = 'PAPERS'
     analysis     = 'ANALYSIS'
     datasets     = 'DATASETS'
 }
