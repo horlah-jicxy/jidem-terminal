@@ -1,5 +1,5 @@
 # ==============================================================================
-# Jidem.Core.ps1 — Phase 1 core control (account-aware)
+# Jidem.Core.ps1 - Phase 1 core control (account-aware)
 #
 # Loads AFTER JidemCommands.ps1 and never edits it. Add to $PROFILE:
 #     . "$HOME\PowerShell\JidemCommands.ps1"
@@ -96,7 +96,7 @@ function Get-JidemLocation([string]$Path = (Get-Location).Path) {
             $Path.StartsWith($root + '\', [StringComparison]::OrdinalIgnoreCase)) {
             $rest = $Path.Substring($root.Length).Trim('\')
             $parts = @($r.Key) + @($rest -split '\\' | Where-Object { $_ })
-            return [pscustomobject]@{ Area = $r.Key; Display = ($parts -join ' → ') }
+            return [pscustomobject]@{ Area = $r.Key; Display = ($parts -join ' > ') }
         }
     }
     [pscustomobject]@{ Area = $null; Display = $Path }
@@ -194,7 +194,9 @@ function recent {
 function today {
     # Everything modified since midnight.
     param([int]$Top = 50, [string[]]$Extension)
-    $files = Get-JidemRecent -Since (Get-Date).Date -Top $Top -Extension $Extension
+    $opts = @{ Since = (Get-Date).Date; Top = $Top }
+    if ($Extension) { $opts.Extension = $Extension }
+    $files = Get-JidemRecent @opts
     Write-Host ("TODAY  {0}" -f (Get-Date -Format 'dddd, MMM d')) -ForegroundColor Cyan
     if (-not $files.Count) { Write-Host 'Nothing modified yet today.' -ForegroundColor DarkGray; return }
     Show-JidemFileList $files
@@ -214,11 +216,11 @@ function tree {
             $item = $items[$i]
             $last = $i -eq $items.Count - 1
             Write-Host $Prefix -NoNewline
-            Write-Host ($(if ($last) { '└── ' } else { '├── ' }) + $item.Name) -NoNewline `
+            Write-Host ($(if ($last) { '\-- ' } else { '|-- ' }) + $item.Name) -NoNewline `
                 -ForegroundColor $(if ($item.PSIsContainer) { 'Yellow' } else { 'Gray' })
             if ($item.PSIsContainer) {
                 Write-Host ("  ({0} files)" -f @(Get-JidemFiles $item.FullName).Count) -ForegroundColor DarkGray
-                if ($Level -lt $Depth) { Walk $item.FullName ($Prefix + $(if ($last) { '    ' } else { '│   ' })) ($Level + 1) }
+                if ($Level -lt $Depth) { Walk $item.FullName ($Prefix + $(if ($last) { '    ' } else { '|   ' })) ($Level + 1) }
             }
             else { Write-Host '' }
         }
