@@ -61,6 +61,7 @@ $Global:JidemPlaces = @(
     New-JidemPlace 'github'         'JIDEM' @("$d\GitHub")                           'GitHub repositories'
 
     # --- MAKIN: UC Merced ---
+    New-JidemPlace 'makin'          'MAKIN' @("$d")                                  'MAKIN Documents'
     New-JidemPlace 'school'         'MAKIN' @("$d\UC-Merced")                        'UC Merced root'
     New-JidemPlace 'courses'        'MAKIN' @("$d\UC-Merced\Courses")                'Courses'
     New-JidemPlace 'ta'             'MAKIN' @("$d\UC-Merced\TA")                     'TA work'
