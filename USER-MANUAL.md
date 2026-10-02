@@ -96,15 +96,15 @@ file; `status` is the command.
 
 ### Load order (matters)
 
-Core first. Dashboard last. The writing-log and sort files go after Help and before Dashboard.
+Core first. Dashboard last. The writing-log, sort and audit files go after Help and before Dashboard.
 
 JIDEM profile, in order: `JidemCommands`, `Jidem.Core`, `Jidem.Navigation`,
 `Jidem.Projects`, `Jidem.Git`, `Jidem.Academia`, `Jidem.Writing`, `Jidem.Search`,
-`Jidem.Maintenance`, `Jidem.Health`, `Jidem.Help`, `Jidem.WritingLog`, `Jidem.Sort`, `Jidem.Dashboard`.
+`Jidem.Maintenance`, `Jidem.Health`, `Jidem.Help`, `Jidem.WritingLog`, `Jidem.Sort`, `Jidem.Audit`, `Jidem.Dashboard`.
 
 MAKIN profile, in order: `JidemCommands`, `Jidem.Core`, `Jidem.Navigation`, `Jidem.Git`,
 `Jidem.Search`, `Jidem.Maintenance`, `Jidem.Writing`, `Jidem.Teaching`, `Jidem.Health`,
-`Jidem.Help`, `Jidem.WritingLog`, `Jidem.Sort`, `Jidem.Dashboard`.
+`Jidem.Help`, `Jidem.WritingLog`, `Jidem.Sort`, `Jidem.Audit`, `Jidem.Dashboard`.
 
 Each line looks like `. "$HOME\PowerShell\Jidem.Core.ps1"` (a dot, a space, then the path).
 That line belongs only in the profile, never inside a command file. (Putting it inside a
@@ -365,6 +365,41 @@ Other loose piles (the Desktop, for example) use the same command:
 `sortdownloads -Path "$HOME\Desktop"`. Old **folders with their own structure** (project
 trees, phone-sync folders) are not flattened by this command; migrate those by copying,
 checking, then removing the originals yourself (section 6.1).
+
+### 6.3 Mapping the whole computer (`auditpc`)
+
+Before moving any old folder, find out what is where. `auditpc` is a **report**: it
+changes nothing, opens nothing, and prints folder names and counts only (never file
+names).
+
+```powershell
+auditpc            # scan and print the map (can take a few minutes)
+auditpc -Csv       # also save it to $HOME\PowerShell\audit-logs for later
+auditpc -Top 60 -MinMB 0     # show more, including small folders
+```
+
+It looks at the top-level folders under your profile, OneDrive, `OneDrive\Documents`,
+`Documents` and the root of `C:\`, and prints for each: number of files, size, newest and
+oldest dates, the two main file types, and a **suggestion**:
+
+| Label | Meaning | What you do |
+|---|---|---|
+| `FILED` | Already inside your Documents workspace | Nothing |
+| `MIGRATE?` | Mostly documents, PDFs, sheets or slides | Copy into the workspace, check, then remove the original yourself, one folder at a time |
+| `SORT-PILE` | Loose files (Downloads, Desktop, or loose files at a root) | `sortdownloads -Path <folder>`, preview first |
+| `LEAVE-APP` | Program data or caches (Anaconda, Zotero, whisper, node_modules, hidden folders) | Leave alone |
+| `LEAVE-SENS` | A research-sensitive name (interview, Zoom, consent, IRB, Houston ...) | Leave exactly where it is; never moved, never put in `Shared` |
+| `REVIEW-MEDIA` | Mostly audio or video, which could be recordings | Check by hand before filing anything |
+| `PHOTOS` | Mostly pictures | Leave, or archive by hand |
+| `CLEAN?` | Mostly installers and archives | Look through them yourself; remove by hand if they are not needed |
+| `PROJECT` | Mostly code or data | Leave in place, or migrate by hand |
+| `EMPTY` | No files | Delete it yourself if you like |
+
+Honest limits: the suggestion comes from names and file types only, so it is a guess. A
+folder counts at most 20,000 files (shown as `20,000+`). Folders that are program data or
+that have a research-sensitive name are listed but never scanned. Copying a folder into the
+workspace is always done by you, as with the coursework: copy, verify, delete the original
+through the Recycle Bin yourself.
 
 ---
 
@@ -752,6 +787,16 @@ sortundo sort-20261002-101500-123.csv -Apply
 ```
 Note: Preview unless -Apply. Skips anything that has moved again or whose original name is now taken.
 
+**`auditpc`** (both accounts)  
+Map where your files live: every top-level folder under your profile, OneDrive, Documents and C:\ with file count, size, age, main file types and a suggestion (migrate, sort, leave, review).
+
+```powershell
+auditpc
+auditpc -Csv
+auditpc -Root "D:\Old" -Top 20
+```
+Note: Report only: never opens, moves, copies or deletes anything, and prints folder names and counts, never file names. Program data and research-sensitive folders are listed but not scanned.
+
 ### Teaching
 
 **`teach`** (MAKIN only)  
@@ -941,6 +986,7 @@ Also check the prompt. You may be in the wrong account.
 | `where`, `write` or `r` behaves oddly | They are built-in PowerShell aliases | The commands were named `jwhere` and `jwrite` for this reason. |
 | "The tracker isn't counting this file" | Not an error: a question | Choose Track, or Time it without tracking. |
 | `sortdownloads` says nothing to sort | Everything is recent, sensitive-named, media or cloud-only | Check the "left where they are" counts; use `-Days`, `-ShowNames` or `-IncludeMedia` after checking. |
+| `auditpc` takes a long time | Large drive; it counts files | Let it finish, or scan one place: `auditpc -Root "C:\Github"`. |
 | `syncwords` says 0 session log files | No timed session in this account's folders yet | Write one timed session, then run it again. |
 | "writing-log.csv has the older column layout" | The first version of the file | Rename it to `writing-log-old.csv` and rerun. |
 | LTeX "could not run ltex-ls with Java" | Slow Java start or an old LTeX fork | Use `ltex-plus`, update Java, restart VS Code fully. |
@@ -1029,7 +1075,7 @@ the Recycle Bin, yourself.
 |---|---|
 | v1.0.0 | The frozen architecture: Phases 1 to 12 and `repair`. |
 | v1.1.0 | Additive: `Jidem.WritingLog.ps1` (`syncwords`, `wordsum`, `logwords`, `countwords`), `coursework` jump command, desk actions for `syncwords` and `wordsum`. |
-| v1.2.0 | `Jidem.Sort.ps1` (`sortdownloads`, `sortundo`): the one command that moves files, narrowly amended into the contract. |
+| v1.2.0 | `Jidem.Sort.ps1` (`sortdownloads`, `sortundo`): the one command that moves files, narrowly amended into the contract. `Jidem.Audit.ps1` (`auditpc`): report-only map of where files live. |
 | Writing Timer 1.6.0 | Session modes, typed-versus-pasted tally, AI-use note, local dates and offsets, 30/45-minute presets, Ctrl+Alt+W, `warnWhenUntracked`. Save & Push now defaults to your last session note. |
 
 Still open at the time of writing: committing the timer 1.6.0 files on `Academic-papers`

@@ -46,7 +46,8 @@ Course folders live in `TA\` (not `Courses\`). Past courses are added with `cour
 12 Jidem.Help.ps1
 13 Jidem.WritingLog.ps1    v1.1.0, after Help (syncwords, wordsum, logwords, countwords)
 14 Jidem.Sort.ps1          v1.2.0, after Help (sortdownloads, sortundo)
-15 Jidem.Dashboard.ps1     ALWAYS LAST
+15 Jidem.Audit.ps1         v1.2.0, after Help (auditpc, report-only)
+16 Jidem.Dashboard.ps1     ALWAYS LAST
 ```
 Naming: `Jidem.<Area>.ps1`; globals `$Global:Jidem*`; helper functions `*-Jidem*`. Core loads before everything but the legacy base.
 
@@ -85,3 +86,4 @@ Naming: `Jidem.<Area>.ps1`; globals `$Global:Jidem*`; helper functions `*-Jidem*
 |---|---|---|
 | v1.1.0 | `Jidem.WritingLog.ps1`; `coursework` jump command; desk actions for `syncwords` and `wordsum`; `writing-log.csv` in Shared (numbers only) | Additive. Only appends to one CSV; never overwrites, edits or deletes. |
 | v1.2.0 | `Jidem.Sort.ps1` (`sortdownloads`, `sortundo`) | A deliberate, narrow amendment of invariant 2. Moves files only on `-Apply` after a preview and a y/n, within the user's own Documents, and is reversible from its manifest. It never reads inside a file. |
+| v1.2.0 | `Jidem.Audit.ps1` (`auditpc`) | Additive and report-only: reads names, sizes and dates, never opens, moves, copies or deletes anything. |

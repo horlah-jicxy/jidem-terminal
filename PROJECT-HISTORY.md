@@ -127,6 +127,10 @@ Your goals, in your own order of priority:
   "nothing moves" rule: preview first, y/n, never overwrites or deletes, skips research-sensitive
   names, and is reversible from a manifest.
 
+- **Computer audit (v1.2.0):** `auditpc` maps where files actually live (profile, OneDrive,
+  Documents, `C:\`) with counts, sizes, ages and a suggestion per folder, never opening a
+  file. It is the report that decides what to migrate, sort or leave, one folder at a time.
+
 ---
 
 ## 5. What exists now
@@ -150,6 +154,7 @@ Your goals, in your own order of priority:
 | `Jidem.Help.ps1` | 12 | jhelp |
 | `Jidem.WritingLog.ps1` | v1.1.0 | syncwords, wordsum, logwords, countwords |
 | `Jidem.Sort.ps1` | v1.2.0 | sortdownloads, sortundo (the one command that moves files) |
+| `Jidem.Audit.ps1` | v1.2.0 | auditpc (report-only map of where files live) |
 
 Documents: `README.md`, `ARCHITECTURE.md` (the frozen contract), `WRITING-PRACTICE.md`,
 and this file.
