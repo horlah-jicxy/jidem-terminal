@@ -1,4 +1,4 @@
-# JIDEM TERMINAL
+# JIDEM TERMINAL  (architecture frozen at v1.0.0 - see ARCHITECTURE.md)
 
 A personal command layer on top of Windows PowerShell 5.1 for two accounts that each have one job:
 
