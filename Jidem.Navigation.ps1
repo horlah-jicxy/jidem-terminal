@@ -46,6 +46,7 @@ $Global:JidemPlaces = @(
     New-JidemPlace 'writing'        'JIDEM' (Get-JidemAcademic 'Writing')            'Manuscripts and drafts'
     New-JidemPlace 'fieldwork'      'JIDEM' (Get-JidemAcademic 'Fieldwork')          'Fieldwork'
     New-JidemPlace 'publications'   'JIDEM' (Get-JidemAcademic 'Publications')       'Published and submitted work'
+    New-JidemPlace 'coursework'     'JIDEM' (Get-JidemAcademic 'Coursework')         'Courses I have taken (IH 210, 213, 250)'
     New-JidemPlace 'papers'         'JIDEM' @("$d\GitHub\Academic-papers\projects")      'Papers and projects (Academic-papers repo)'
     New-JidemPlace 'analysis'       'JIDEM' (Get-JidemAcademic 'Analysis')           'Analysis'
     New-JidemPlace 'datasets'       'JIDEM' (Get-JidemAcademic 'Data')               'Data'
