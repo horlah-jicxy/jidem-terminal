@@ -35,8 +35,8 @@ $Global:JidemDeskDays = 14
 $Global:JidemDeskAreas = @('dissertation', 'papers', 'research', 'writing', 'publications', 'fieldwork', 'analysis')
 
 # Quick actions per account (only commands that are actually loaded are listed).
-$Global:JidemDeskActionsJidem = @('dissertation', 'research', 'writing', 'papers', 'projects', 'inbox', 'recent', 'status')
-$Global:JidemDeskActionsMakin = @('teach', 'course', 'ta', 'shared', 'today', 'status')
+$Global:JidemDeskActionsJidem = @('dissertation', 'research', 'writing', 'papers', 'projects', 'inbox', 'recent', 'syncwords', 'wordsum', 'status')
+$Global:JidemDeskActionsMakin = @('teach', 'course', 'ta', 'shared', 'today', 'syncwords', 'wordsum', 'status')
 
 # ---------- Helpers ----------
 
