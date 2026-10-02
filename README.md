@@ -1,4 +1,6 @@
-# JIDEM TERMINAL  (architecture frozen at v1.0.0 - see ARCHITECTURE.md)
+# JIDEM TERMINAL  (architecture frozen at v1.0.0 - see ARCHITECTURE.md; v1.1.0 adds the shared word count)
+
+New here? Read `USER-MANUAL.md`. For how it was built and what each mistake taught, read `PROJECT-HISTORY.md`.
 
 A personal command layer on top of Windows PowerShell 5.1 for two accounts that each have one job:
 
@@ -25,6 +27,7 @@ running in (from the profile folder name) and either does its job or says which 
 | `Jidem.Maintenance.ps1` | 9 | both | Report-only: `inbox` (JIDEM) `duplicates` `empty` `cleanup` |
 | `Jidem.Health.ps1` | 11 | both | `health` `validate` `backup` `repair` |
 | `Jidem.Help.ps1` | 12 | both | `jhelp`, `jhelp <command>`, `jhelp <group>`, `jhelp -All` |
+| `Jidem.WritingLog.ps1` | v1.1.0 | both | `syncwords` `wordsum` `logwords` `countwords`: a shared daily word count (numbers only) in `Shared\writing-log.csv`. Load after Help, before Dashboard. |
 | `Jidem.Dashboard.ps1` | 10 | both | `dashboard` / `desk`: JIDEM academic desk, MAKIN teaching desk. **Load last.** |
 
 ## Profile (`$PROFILE`, in OneDrive\Documents\WindowsPowerShell)
@@ -44,10 +47,11 @@ JIDEM:
 . "$HOME\PowerShell\Jidem.Maintenance.ps1"
 . "$HOME\PowerShell\Jidem.Health.ps1"
 . "$HOME\PowerShell\Jidem.Help.ps1"
+. "$HOME\PowerShell\Jidem.WritingLog.ps1"
 . "$HOME\PowerShell\Jidem.Dashboard.ps1"
 ```
 
-MAKIN: the same, without `Projects` and `Academia`, and with `Jidem.Teaching.ps1` (after Maintenance/Writing, before Health).
+MAKIN: the same, without `Projects` and `Academia`, and with `Jidem.Teaching.ps1` (after Maintenance/Writing, before Health); `Jidem.WritingLog.ps1` goes after Help in both.
 
 ## Rules the whole system follows
 
@@ -96,3 +100,12 @@ account, `Unblock-File` them, then delete the temporary folder.
 
 Two layers: `backup` (local dated copies per account) and this repository (`horlah-jicxy/jidem-terminal`, private).
 Your actual academic files are not in this repository and should have their own backup (OneDrive, external drive).
+
+## Documentation
+
+| File | What it is |
+|---|---|
+| `USER-MANUAL.md` | How to use everything: routines, the writing timer, the shared word count, safety, troubleshooting, command reference |
+| `PROJECT-HISTORY.md` | How the workspace grew, what exists, and the learning record of every kind of error |
+| `ARCHITECTURE.md` | The frozen contract and its invariants |
+| `WRITING-PRACTICE.md` | The drafting, cold-write, feedback and AI-use routine |
