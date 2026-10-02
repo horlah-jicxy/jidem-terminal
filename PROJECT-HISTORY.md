@@ -66,7 +66,7 @@ Your goals, in your own order of priority:
 
 ## 4. How it grew
 
-### Day 1 - Wednesday 1 October: foundation (7 am to evening)
+### Day 1 - Thursday 1 October: foundation (7 am to evening)
 
 - You shared the vision (navigation, observe, create, academic, development) and your
   existing library. Decision: build on it, in its own repo, without touching it.
@@ -85,7 +85,7 @@ Your goals, in your own order of priority:
 - **Phase 8 - Search:** `findfile`, `findtext`, `search`, scoped by path, command name or
   folder name; reads text inside `.docx` files.
 
-### Day 2 - Thursday 2 October: safety, structure and the writing environment
+### Day 2 - Friday 2 October: safety, structure and the writing environment
 
 - **Phase 9 - Maintenance:** report-only `inbox`, `duplicates`, `empty`, `cleanup`.
 - **Phase 10 - Dashboard:** `dashboard` / `desk` (an academic desk for JIDEM, a teaching
@@ -110,7 +110,7 @@ Your goals, in your own order of priority:
 - **Interview folders** (`C:\Houston_Project`, `interview_data`) were readable and
   modifiable by every account on the PC. Permissions tightened to administrators only,
   with the original permissions saved for undo.
-- **VS Code:** MAKIN trimmed from 15 to 10 extensions, Settings Sync turned off so the
+- **VS Code:** MAKIN trimmed from 15 extensions to 11 (five removed, the writing timer added), Settings Sync turned off so the
   two accounts stop overwriting each other, LTeX swapped to the maintained version and set
   to check on request, so drafting is not interrupted by underlines.
 - **Writing Timer 1.6.0:** session mode (Draft / Edit / Cold-write), typed-versus-pasted
@@ -157,7 +157,7 @@ and this file.
 
 ## 6. The learning curve: every kind of error, and what it taught
 
-About 45 of your messages contained an error. They fall into a small number of causes,
+Around 40 of your pasted messages contained an error. They fall into a small number of causes,
 and almost every one taught a habit. That is the useful finding: the mistakes were not
 random, they were the same few things in different clothes.
 
@@ -195,7 +195,7 @@ recognized after the code had been pasted.
 
 ### D. Invisible characters broke the script (parse errors)
 
-Arrows, box-drawing characters and em dashes turned into garbage (`â†’`) and the parser
+Arrows, box-drawing characters and em dashes turned into garbage characters and the parser
 failed with "Unexpected token".
 
 - **Cause:** PowerShell 5.1 reads files by a different text encoding than the one they
