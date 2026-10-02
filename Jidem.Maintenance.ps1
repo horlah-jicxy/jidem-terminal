@@ -31,10 +31,10 @@ $Global:JidemKeepEmpty = @('__init__.py', '.gitkeep', '.keep', '.gitignore')
 
 # Inbox guesses: first matching rule wins (matched against the lower-case file name).
 $Global:JidemInboxRules = @(
-    @{ Category = 'Teaching';     Pattern = 'syllabus|assignment|rubric|grading|grades|attendance|lecture|section|anth[-_ ]?\d|\bih[-_ ]?\d' }
+    @{ Category = 'Teaching';     Pattern = 'syllabus|assignment|rubric|grading|grades|attendance|lecture|\bsection\b|anth[-_ ]?\d|\bih[-_ ]?\d' }
     @{ Category = 'Dissertation'; Pattern = 'dissertation|chapter|candidacy|prospectus' }
-    @{ Category = 'Research';     Pattern = 'fieldnote|interview|transcript|corpus|codebook|survey|consent|irb' }
-    @{ Category = 'Writing';      Pattern = 'draft|abstract|proposal|paper|manuscript|essay|cv|statement' }
+    @{ Category = 'Research';     Pattern = 'fieldnote|interview|transcript|corpus|codebook|survey|consent|\birb\b' }
+    @{ Category = 'Writing';      Pattern = 'draft|abstract|proposal|paper|manuscript|essay|\bcv\b|statement' }
 )
 $Global:JidemInboxDataExt  = @('.csv', '.xlsx', '.xls', '.sav', '.dta', '.rds', '.json')
 $Global:JidemInboxMediaExt = @('.jpg', '.jpeg', '.png', '.gif', '.heic', '.mp3', '.m4a', '.wav', '.mp4', '.mov')
