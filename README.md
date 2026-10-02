@@ -14,6 +14,7 @@ Command layer for the two Windows accounts (JIDEM and MAKIN).
 | `Jidem.Writing.ps1` | Phase 7 writing + VS Code: `openvscode`, `edit`, `jwrite` (not `write`: built-in alias), `focus`. |
 | `Jidem.Search.ps1` | Phase 8 search: `findfile`, `findtext` (incl. Word .docx), `search`. Works in both accounts. |
 | `Jidem.Maintenance.ps1` | Phase 9 maintenance (report-only): `inbox`, `duplicates`, `empty`, `cleanup`. Load after Search. |
+| `Jidem.Health.ps1` | Phase 11 safety: `health`, `validate`, `backup` (read-only checks; backup only adds new dated copies). Load before Dashboard. |
 | `Jidem.Dashboard.ps1` | Phase 10 dashboard: `dashboard` / `desk` (JIDEM academic desk, MAKIN teaching desk) with a quick-action menu. Load LAST. |
 
 `$PROFILE` (both accounts):
