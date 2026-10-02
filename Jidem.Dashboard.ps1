@@ -32,7 +32,7 @@ $Global:JidemDashboardOnStart = $false
 $Global:JidemDeskDays = 14
 
 # Academic areas shown on the JIDEM desk, in this order (names of jump commands).
-$Global:JidemDeskAreas = @('dissertation', 'research', 'writing', 'publications', 'fieldwork', 'analysis')
+$Global:JidemDeskAreas = @('dissertation', 'papers', 'research', 'writing', 'publications', 'fieldwork', 'analysis')
 
 # Quick actions per account (only commands that are actually loaded are listed).
 $Global:JidemDeskActionsJidem = @('dissertation', 'research', 'writing', 'papers', 'projects', 'inbox', 'recent', 'status')
