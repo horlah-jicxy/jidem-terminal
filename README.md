@@ -13,6 +13,7 @@ Command layer for the two Windows accounts (JIDEM and MAKIN).
 | `Jidem.Teaching.ps1` | Phase 6 teaching workflow (MAKIN): `teach` overview plus summaries for `courses`, `ta`, `teaching`, `university`, `administration`, `currentwork`. Load last, MAKIN only. |
 | `Jidem.Writing.ps1` | Phase 7 writing + VS Code: `openvscode`, `edit`, `jwrite` (not `write`: built-in alias), `focus`. |
 | `Jidem.Search.ps1` | Phase 8 search: `findfile`, `findtext` (incl. Word .docx), `search`. Works in both accounts. |
+| `Jidem.Maintenance.ps1` | Phase 9 maintenance (report-only): `inbox`, `duplicates`, `empty`, `cleanup`. Load after Search. |
 
 `$PROFILE` (both accounts):
 
