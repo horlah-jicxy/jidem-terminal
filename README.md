@@ -12,6 +12,7 @@ Command layer for the two Windows accounts (JIDEM and MAKIN).
 | `Jidem.Academia.ps1` | Phase 5 academic workflow (JIDEM): `dissertation`, `research`, `writing`, `fieldwork`, `publications`, `analysis`, `datasets` now show a summary; `-Code` opens VS Code, `-Quiet` just jumps. Load last. |
 | `Jidem.Teaching.ps1` | Phase 6 teaching workflow (MAKIN): `teach` overview plus summaries for `courses`, `ta`, `teaching`, `university`, `administration`, `currentwork`. Load last, MAKIN only. |
 | `Jidem.Writing.ps1` | Phase 7 writing + VS Code: `openvscode`, `edit`, `jwrite` (not `write`: built-in alias), `focus`. |
+| `Jidem.Search.ps1` | Phase 8 search: `findfile`, `findtext` (incl. Word .docx), `search`. Works in both accounts. |
 
 `$PROFILE` (both accounts):
 
