@@ -1,6 +1,6 @@
 # JIDEM TERMINAL - User Manual
 
-Version: terminal v1.1.0 (architecture frozen at v1.0.0), Writing Timer 1.6.0.
+Version: terminal v1.2.0 (architecture frozen at v1.0.0, amended at v1.1.0 and v1.2.0), Writing Timer 1.6.0.
 Written 2 October 2026. For the story of how this was built, and the mistakes that shaped it,
 see `PROJECT-HISTORY.md`. For the technical contract, see `ARCHITECTURE.md`.
 
@@ -17,7 +17,7 @@ wrong once during the build.
 3. How the system works (the one idea that explains most problems)
 4. Daily, weekly and monthly routines
 5. Writing: the timer, Save & Push, and the shared word count
-6. Moving files between the two accounts
+6. Moving files: between the accounts, and sorting loose files
 7. Protecting sensitive material
 8. Git habits
 9. Command reference
@@ -50,7 +50,7 @@ Five rules the whole system obeys. They are why you can trust it:
 
 1. **Reports never change anything.** They only read.
 2. **Commands that create things never overwrite**, and most support `-WhatIf` (preview).
-3. **Nothing commits, pulls, pushes, moves, renames or deletes for you.** You do those.
+3. **Nothing commits, pulls, pushes, renames or deletes for you.** You do those. Nothing moves files either, with one deliberate exception: `sortdownloads -Apply` (section 6.2), which previews first, asks y/n, never overwrites or deletes, and can be undone.
 4. **`repair` previews by default**, backs up before it applies, and never edits your
    profile or your code.
 5. **`health` must pass in both accounts after any change.**
@@ -96,15 +96,15 @@ file; `status` is the command.
 
 ### Load order (matters)
 
-Core first. Dashboard last. The writing-log file goes after Help and before Dashboard.
+Core first. Dashboard last. The writing-log and sort files go after Help and before Dashboard.
 
 JIDEM profile, in order: `JidemCommands`, `Jidem.Core`, `Jidem.Navigation`,
 `Jidem.Projects`, `Jidem.Git`, `Jidem.Academia`, `Jidem.Writing`, `Jidem.Search`,
-`Jidem.Maintenance`, `Jidem.Health`, `Jidem.Help`, `Jidem.WritingLog`, `Jidem.Dashboard`.
+`Jidem.Maintenance`, `Jidem.Health`, `Jidem.Help`, `Jidem.WritingLog`, `Jidem.Sort`, `Jidem.Dashboard`.
 
 MAKIN profile, in order: `JidemCommands`, `Jidem.Core`, `Jidem.Navigation`, `Jidem.Git`,
 `Jidem.Search`, `Jidem.Maintenance`, `Jidem.Writing`, `Jidem.Teaching`, `Jidem.Health`,
-`Jidem.Help`, `Jidem.WritingLog`, `Jidem.Dashboard`.
+`Jidem.Help`, `Jidem.WritingLog`, `Jidem.Sort`, `Jidem.Dashboard`.
 
 Each line looks like `. "$HOME\PowerShell\Jidem.Core.ps1"` (a dot, a space, then the path).
 That line belongs only in the profile, never inside a command file. (Putting it inside a
@@ -163,6 +163,7 @@ Do this in each account you wrote in.
 
 ### Monthly or after a big change
 
+- `sortdownloads` (preview, then `-Apply`) to file the Downloads pile (section 6.2).
 - `duplicates` for wasted space (reports only; you decide).
 - Check that the interview data copy in UC Merced Box is current.
 - Delete temporary `_rescue_*` and `_backup-*` folders you no longer need (through the
@@ -293,10 +294,12 @@ Fixing a wrong entry:
 
 ---
 
-## 6. Moving files between the two accounts
+## 6. Moving files: between the accounts, and sorting loose files
 
 `Shared` is a bridge, not a place to keep things. It is readable by every account on the
 PC, so **no sensitive material ever goes in it** (see section 7).
+
+### 6.1 Between the two accounts
 
 The pattern, every time:
 
@@ -315,6 +318,53 @@ Get-FileHash "C:\path\to\original" ; Get-FileHash "C:\path\to\copy"
 ```
 
 Leave `writing-log.csv` in `Shared`. It is meant to be there.
+
+### 6.2 Sorting a loose pile (Downloads, Desktop)
+
+`sortdownloads` files the loose items in your Downloads folder into
+`Documents\Archive\Downloads\<Category>\<Year>\`, so nothing sits unfiled. It works **without
+ever reading inside a file**: it looks only at names, extensions, sizes and dates, and the
+preview prints counts, not file names. Neither you nor Claude has to open anything.
+
+Use it in this order:
+
+```powershell
+sortdownloads                     # PREVIEW: counts by category, and what it will leave alone
+sortdownloads -ShowNames          # optional: the same, with names, on your own screen
+sortdownloads -Apply              # does it, after asking y/n
+sortundo                          # lists past sorts
+sortundo sort-<stamp>.csv -Apply  # puts one sort back where it was
+```
+
+Categories: Documents, PDFs, Spreadsheets, Slides, Images, Compressed, Installers,
+CodeData, Other, and Folders (whole folders move intact into `Folders\<year>`, never
+emptied out). The year is when the file arrived (the later of its created and modified dates).
+
+What it **leaves alone** (always counted in the preview):
+
+- anything that arrived or changed in the last 14 days (`-Days` changes this; `-Days 0` means everything)
+- partial downloads (`.crdownload`, `.tmp`, `.part`)
+- OneDrive cloud-only placeholders (moving them would download them)
+- audio and video, because they can be recordings (add `-IncludeMedia` once you have checked)
+- any name matching `$Global:JidemSortKeep`: interview, Zoom, transcript, consent, IRB,
+  participant, fieldnote, Taguette, Houston, recording. Edit that list in `Jidem.Sort.ps1`
+  to add more. Those items stay exactly where they are.
+- hidden folders (names starting with a dot)
+
+Safety:
+
+- It never overwrites (a name clash becomes `name (2).ext`) and never deletes.
+- Every move is written to a manifest in `$HOME\PowerShell\sort-logs`, which `sortundo` uses.
+  `sortundo` skips anything that has moved again or whose original name is now taken.
+- It refuses to sort your home folder, `Documents`, a drive root, or `Shared`.
+- `-WhatIf` with `-Apply` lists each move and does none.
+- The archive is in the local `Documents` folder, which OneDrive does **not** back up
+  (section 3). Include `Documents\Archive` in your own backup.
+
+Other loose piles (the Desktop, for example) use the same command:
+`sortdownloads -Path "$HOME\Desktop"`. Old **folders with their own structure** (project
+trees, phone-sync folders) are not flattened by this command; migrate those by copying,
+checking, then removing the originals yourself (section 6.1).
 
 ---
 
@@ -682,6 +732,26 @@ cleanup [-Quick] [-StaleDays 90]
 ```
 Note: -Quick skips the duplicate check, which can be slow. Report only.
 
+**`sortdownloads`** (both accounts)  
+Sort a loose pile (Downloads by default) into Documents\Archive by file type and arrival year. Preview first; counts only, never reads inside files.
+
+```powershell
+sortdownloads
+sortdownloads -Days 30 -ShowNames
+sortdownloads -Apply
+sortdownloads -Path "$HOME\Desktop"
+```
+Note: The one command that moves files. Preview unless -Apply, then asks y/n. Never overwrites or deletes. Leaves recent files, partial downloads, cloud-only files, audio/video (unless -IncludeMedia) and names matching $Global:JidemSortKeep (interview, Zoom, transcript, consent, IRB ...). Folders move intact. Writes a manifest to $HOME\PowerShell\sort-logs.
+
+**`sortundo`** (both accounts)  
+List past sorts, or put the files from one sort back where they were.
+
+```powershell
+sortundo
+sortundo sort-20261002-101500-123.csv -Apply
+```
+Note: Preview unless -Apply. Skips anything that has moved again or whose original name is now taken.
+
 ### Teaching
 
 **`teach`** (MAKIN only)  
@@ -870,6 +940,7 @@ Also check the prompt. You may be in the wrong account.
 | `Copy-Item : An item ... already exists` on a folder | The folder is already there | Check the files arrived (hashes). Usually harmless. |
 | `where`, `write` or `r` behaves oddly | They are built-in PowerShell aliases | The commands were named `jwhere` and `jwrite` for this reason. |
 | "The tracker isn't counting this file" | Not an error: a question | Choose Track, or Time it without tracking. |
+| `sortdownloads` says nothing to sort | Everything is recent, sensitive-named, media or cloud-only | Check the "left where they are" counts; use `-Days`, `-ShowNames` or `-IncludeMedia` after checking. |
 | `syncwords` says 0 session log files | No timed session in this account's folders yet | Write one timed session, then run it again. |
 | "writing-log.csv has the older column layout" | The first version of the file | Rename it to `writing-log-old.csv` and rerun. |
 | LTeX "could not run ltex-ls with Java" | Slow Java start or an old LTeX fork | Use `ltex-plus`, update Java, restart VS Code fully. |
@@ -958,6 +1029,7 @@ the Recycle Bin, yourself.
 |---|---|
 | v1.0.0 | The frozen architecture: Phases 1 to 12 and `repair`. |
 | v1.1.0 | Additive: `Jidem.WritingLog.ps1` (`syncwords`, `wordsum`, `logwords`, `countwords`), `coursework` jump command, desk actions for `syncwords` and `wordsum`. |
+| v1.2.0 | `Jidem.Sort.ps1` (`sortdownloads`, `sortundo`): the one command that moves files, narrowly amended into the contract. |
 | Writing Timer 1.6.0 | Session modes, typed-versus-pasted tally, AI-use note, local dates and offsets, 30/45-minute presets, Ctrl+Alt+W, `warnWhenUntracked`. Save & Push now defaults to your last session note. |
 
 Still open at the time of writing: committing the timer 1.6.0 files on `Academic-papers`

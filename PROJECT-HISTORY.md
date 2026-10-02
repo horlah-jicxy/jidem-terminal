@@ -121,6 +121,12 @@ Your goals, in your own order of priority:
   covers writing in both accounts. Confirmed working in both accounts, with MAKIN's first
   session counted next to JIDEM's.
 
+- **Sorting loose files (v1.2.0):** `sortdownloads` and `sortundo` file a loose pile (Downloads)
+  into `Documents\Archive` by type and year without reading inside any file. It is the one
+  command that moves files, so it was added as a deliberate, documented amendment to the
+  "nothing moves" rule: preview first, y/n, never overwrites or deletes, skips research-sensitive
+  names, and is reversible from a manifest.
+
 ---
 
 ## 5. What exists now
@@ -143,6 +149,7 @@ Your goals, in your own order of priority:
 | `Jidem.Health.ps1` | 11 | health, validate, backup, repair |
 | `Jidem.Help.ps1` | 12 | jhelp |
 | `Jidem.WritingLog.ps1` | v1.1.0 | syncwords, wordsum, logwords, countwords |
+| `Jidem.Sort.ps1` | v1.2.0 | sortdownloads, sortundo (the one command that moves files) |
 
 Documents: `README.md`, `ARCHITECTURE.md` (the frozen contract), `WRITING-PRACTICE.md`,
 and this file.

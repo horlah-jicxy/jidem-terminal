@@ -1,4 +1,4 @@
-# JIDEM TERMINAL - Architecture (FROZEN at v1.0.0)
+# JIDEM TERMINAL - Architecture (FROZEN at v1.0.0; amended at v1.1.0 and v1.2.0, see section 8)
 
 This document is the contract. Day-to-day work happens *inside* it; changing the contract itself is a deliberate,
 rare act (see "Changing the contract").
@@ -9,7 +9,7 @@ rare act (see "Changing the contract").
 |---|---|---|
 | JIDEM | Intellectual production | `C:\Users\jidem` |
 | MAKIN | Institutional operations | `C:\Users\makin` |
-| Shared | The only bridge between them | `C:\Users\Public\Documents\Shared` (kept EMPTY between handoffs) |
+| Shared | The only bridge between them | `C:\Users\Public\Documents\Shared` (kept EMPTY between handoffs; the one standing exception is `writing-log.csv`, numbers only) |
 
 Accounts never read each other's profiles. The account is derived from the profile folder name (`$HOME` leaf, upper-cased).
 
@@ -44,14 +44,16 @@ Course folders live in `TA\` (not `Courses\`). Past courses are added with `cour
 10 Jidem.Teaching.ps1      MAKIN only (after Navigation)
 11 Jidem.Health.ps1
 12 Jidem.Help.ps1
-13 Jidem.Dashboard.ps1     ALWAYS LAST
+13 Jidem.WritingLog.ps1    v1.1.0, after Help (syncwords, wordsum, logwords, countwords)
+14 Jidem.Sort.ps1          v1.2.0, after Help (sortdownloads, sortundo)
+15 Jidem.Dashboard.ps1     ALWAYS LAST
 ```
 Naming: `Jidem.<Area>.ps1`; globals `$Global:Jidem*`; helper functions `*-Jidem*`. Core loads before everything but the legacy base.
 
 ## 4. Invariants (never broken, even by "small" additions)
 
 1. Reports are read-only (inbox, duplicates, empty, cleanup, health, validate, all git commands).
-2. Nothing commits, stages, pulls, pushes, moves, renames or deletes on the user's behalf.
+2. Nothing commits, stages, pulls, pushes, renames or deletes on the user's behalf. Nothing MOVES files either, with ONE deliberate exception (v1.2.0): `sortdownloads -Apply`, which previews first, asks y/n, never overwrites or deletes, skips research-sensitive names, and writes a manifest that `sortundo` can reverse.
 3. Anything that creates never overwrites, and supports `-WhatIf` where it can (projectnew, coursenew, backup).
 4. `repair` previews by default; `-Apply` backs up first; it never edits the profile or command files.
 5. Command files are ASCII only, parse cleanly, and contain no profile load line (those live only in `$PROFILE`).
@@ -76,3 +78,10 @@ Naming: `Jidem.<Area>.ps1`; globals `$Global:Jidem*`; helper functions `*-Jidem*
 - `ACADEMIC` is tried as a fallback root alongside `Academia`.
 - `Academia\Dissertation` is empty; the real dissertation project is `GitHub\Academic-papers\projects\dissertation`.
 - Windows PowerShell 5.1 only; no PowerShell 7 features.
+
+## 8. Amendments since v1.0.0
+
+| Version | Change | Why it stays inside the contract |
+|---|---|---|
+| v1.1.0 | `Jidem.WritingLog.ps1`; `coursework` jump command; desk actions for `syncwords` and `wordsum`; `writing-log.csv` in Shared (numbers only) | Additive. Only appends to one CSV; never overwrites, edits or deletes. |
+| v1.2.0 | `Jidem.Sort.ps1` (`sortdownloads`, `sortundo`) | A deliberate, narrow amendment of invariant 2. Moves files only on `-Apply` after a preview and a y/n, within the user's own Documents, and is reversible from its manifest. It never reads inside a file. |
