@@ -268,7 +268,7 @@ function status {
         if (Test-Path -LiteralPath $r.Value) {
             $n = @(Get-ChildItem -LiteralPath $r.Value -Directory -ErrorAction SilentlyContinue |
                    Where-Object { $Global:JidemIgnore -notcontains $_.Name }).Count
-            Write-Host ('  {0,-12}{1} folder(s)' -f $r.Key, $n)
+            Write-Host ('  {0,-14}{1} folder(s)' -f $r.Key, $n)
         }
         else { Write-Host ('  {0,-12}[NOT FOUND]' -f $r.Key) -ForegroundColor DarkGray }
     }
