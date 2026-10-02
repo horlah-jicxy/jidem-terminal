@@ -131,6 +131,7 @@ function Get-JidemGit([string]$Path = (Get-Location).Path) {
         Root    = $top
         Branch  = (git -C $Path branch --show-current 2>$null)
         Changes = @(git -C $Path status --short 2>$null)
+        PathChanges = @(git -C $Path status --short -- . 2>$null)
     }
 }
 

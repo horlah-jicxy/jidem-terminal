@@ -127,7 +127,7 @@ function jwrite {
     Write-Host "Writing: $($p.Name)" -ForegroundColor Cyan
     Write-Host "  $($p.Path)" -ForegroundColor DarkGray
     if ($p.Newest) { Write-Host ("  Last edit: {0}  ({1})" -f $p.Newest.Name, (Format-Age $p.Latest)) }
-    if ($g = Get-JidemGit $p.Path) { Write-Host ("  Git: [{0}]  {1} change(s)" -f $g.Branch, $g.Changes.Count) }
+    if ($g = Get-JidemGit $p.Path) { Write-Host ("  Git: [{0}]  {1} change(s)" -f $g.Branch, $g.PathChanges.Count) }
     if (-not $NoCode -and (Test-JidemCode)) { code . }
 }
 
@@ -143,7 +143,7 @@ function focus {
     Write-Host ('{0,-10}{1}' -f 'EDITOR', $(if (Get-Command code -ErrorAction SilentlyContinue) { 'VS Code (available)' } else { 'VS Code not found on PATH' }))
 
     if ($g = Get-JidemGit $p.Path) {
-        $state = if ($g.Changes.Count -eq 0) { 'clean' } else { "$($g.Changes.Count) uncommitted change(s)" }
+        $state = if ($g.PathChanges.Count -eq 0) { 'clean' } else { "$($g.PathChanges.Count) uncommitted change(s)" }
         Write-Host ('{0,-10}{1}  [{2}]  {3}' -f 'GIT', (Split-Path $g.Root -Leaf), $g.Branch, $state)
     }
     else { Write-Host ('{0,-10}{1}' -f 'GIT', 'not a git repository') -ForegroundColor DarkGray }

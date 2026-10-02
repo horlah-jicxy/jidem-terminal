@@ -95,7 +95,7 @@ function Show-JidemArea([string]$Title, [string]$Path) {
     Write-Host 'GIT' -ForegroundColor Yellow
     $g = Get-JidemGit $Path
     if ($g) {
-        Write-Host ("  {0}  [{1}]  {2} change(s)" -f (Split-Path $g.Root -Leaf), $g.Branch, $g.Changes.Count)
+        Write-Host ("  {0}  [{1}]  {2} change(s)" -f (Split-Path $g.Root -Leaf), $g.Branch, $g.PathChanges.Count)
     }
     else {
         $found = 0
