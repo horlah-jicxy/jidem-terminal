@@ -133,8 +133,8 @@ function Show-JidemHelpEntry($Entry, [string]$Name) {
 function jhelp {
     param([Parameter(Position = 0)][string]$Topic, [switch]$All)
     $acct = $Global:JidemAccount
-    $all = @($Global:JidemHelp)
-    $visible = @($all | Where-Object { $All -or $_.Account -eq 'ANY' -or $_.Account -eq $acct })
+    $catalog = @($Global:JidemHelp)
+    $visible = @($catalog | Where-Object { $All -or $_.Account -eq 'ANY' -or $_.Account -eq $acct })
     $mark = { param($e) if ($e.Account -ne 'ANY' -and $e.Account -ne $acct) { '*' } else { '' } }
 
     # --- Overview ---
@@ -160,7 +160,7 @@ function jhelp {
     $t = $Topic.Trim()
 
     # --- Exact command ---
-    $hit = @($all | Where-Object { $_.Names -contains $t })
+    $hit = @($catalog | Where-Object { $_.Names -contains $t })
     if ($hit.Count) { Show-JidemHelpEntry $hit[0] $t; return }
 
     # --- A group (whole name, or the start of it) ---
@@ -169,7 +169,7 @@ function jhelp {
     if ($group -and $norm.Length -ge 3) {
         Write-Host ''
         Write-Host $group.ToUpper() -ForegroundColor Cyan
-        foreach ($e in @($all | Where-Object { $_.Group -eq $group })) {
+        foreach ($e in @($catalog | Where-Object { $_.Group -eq $group })) {
             if (-not $All -and $e.Account -ne 'ANY' -and $e.Account -ne $acct) { continue }
             Write-Host ('  {0,-22}' -f (($e.Names | Select-Object -First 3) -join ', ')) -NoNewline -ForegroundColor Yellow
             Write-Host $e.Synopsis
@@ -181,7 +181,7 @@ function jhelp {
     }
 
     # --- Partial match on names or descriptions ---
-    $found = @($all | Where-Object { ($_.Names -join ' ') -like "*$t*" -or $_.Synopsis -like "*$t*" })
+    $found = @($catalog | Where-Object { ($_.Names -join ' ') -like "*$t*" -or $_.Synopsis -like "*$t*" })
     if ($found.Count) {
         Write-Host ''
         Write-Host "Nothing named '$t'. Related:" -ForegroundColor Yellow
