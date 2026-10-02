@@ -12,6 +12,7 @@
 #               git, VS Code, the Shared bridge, and when you last made a backup
 #   validate    check every folder the commands point at (places, projects, writing roots)
 #               and list the ones that do not exist, with the command to create them
+#   repair      PREVIEW safe fixes (unblock files, create missing folders); -Apply does them after a backup
 #   backup      copy your command files and profile into a new dated folder under
 #               $HOME\PowerShell\backups (never overwrites or deletes; -WhatIf previews)
 #
@@ -35,7 +36,7 @@ $Global:JidemHealthFiles = @{
 $Global:JidemHealthCommands = @{
     ALL   = @('status', 'jwhere', 'workspace', 'recent', 'today', 'tree', 'size', 'places', 'gitstatus', 'gitchanges', 'gitlog',
               'gitbranch', 'findfile', 'findtext', 'search', 'cleanup', 'duplicates', 'empty', 'dashboard', 'edit', 'openvscode',
-              'health', 'validate', 'backup')
+              'health', 'validate', 'backup', 'repair')
     JIDEM = @('projects', 'openproject', 'projectinfo', 'projectnew', 'dissertation', 'research', 'writing', 'papers', 'jwrite', 'focus', 'inbox')
     MAKIN = @('teach', 'course', 'coursenew', 'ta', 'courses')
 }
@@ -260,4 +261,131 @@ function backup {
         $all = @(Get-ChildItem -LiteralPath $root -Directory -ErrorAction SilentlyContinue).Count
         Write-Host ("  {0} backup(s) kept in {1}. Old ones are never deleted automatically." -f $all, $root) -ForegroundColor DarkGray
     }
+}
+
+# ---------- repair (safe fixes only) ----------
+#   repair                          PREVIEW: list what could be fixed and what needs you. Changes nothing.
+#   repair -Apply                   take a backup, then unblock blocked command files
+#   repair -Apply -CreateFolders    also create the missing folders that 'validate' lists
+# It never edits your profile or command files, never deletes, and never overwrites anything.
+# Problems it cannot fix safely are listed under NEEDS YOU, with the exact line or step to take.
+
+function Get-JidemMissingFolders {
+    $acct = $Global:JidemAccount
+    $list = @()
+    foreach ($p in $Global:JidemPlaces) {
+        if ($p.Account -ne 'ANY' -and $p.Account -ne $acct) { continue }
+        $found = $p.Paths | Where-Object { Test-Path -LiteralPath $_ -PathType Container } | Select-Object -First 1
+        if (-not $found) { $list += [pscustomobject]@{ What = "command '$($p.Name)'"; Path = $p.Paths[0] } }
+    }
+    if ($acct -eq 'JIDEM' -and $Global:JidemPinnedProjects) {
+        foreach ($p in $Global:JidemPinnedProjects) {
+            if (-not (Test-Path -LiteralPath $p.Path -PathType Container)) { $list += [pscustomobject]@{ What = "project '$($p.Name)'"; Path = $p.Path } }
+        }
+    }
+    $seen = @{}
+    foreach ($item in $list) {
+        $key = $item.Path.ToLower()
+        if (-not $seen.ContainsKey($key)) { $seen[$key] = $true; $item }
+    }
+}
+
+function repair {
+    param([switch]$Apply, [switch]$CreateFolders)
+    $acct = $Global:JidemAccount
+    $dir = Join-Path $HOME 'PowerShell'
+    $fixes = New-Object System.Collections.ArrayList
+    $needsYou = New-Object System.Collections.ArrayList
+    $expected = @()
+    if ($Global:JidemHealthFiles.ContainsKey($acct)) { $expected = @($Global:JidemHealthFiles[$acct]) }
+
+    # 1. Command files: blocked ones can be unblocked; anything else needs you.
+    foreach ($f in $expected) {
+        $path = Join-Path $dir $f
+        if (-not (Test-Path -LiteralPath $path)) {
+            [void]$needsYou.Add("$f is missing from $dir. Copy it from the other account through the Shared folder, or paste it again.")
+            continue
+        }
+        if (Get-Item -LiteralPath $path -Stream Zone.Identifier -ErrorAction SilentlyContinue) {
+            [void]$fixes.Add(@{ Kind = 'unblock'; Target = $path; Label = $f; Gated = $false })
+        }
+        $r = Test-JidemFileHealth $path
+        $rest = @($r.Detail -split '; ' | Where-Object { $_ -notmatch '^blocked' })
+        if ($r.Status -ne 'OK' -and $rest.Count -and $rest[0]) { [void]$needsYou.Add("${f}: " + ($rest -join '; ')) }
+    }
+
+    # 2. Profile: report only, never edited.
+    $ptext = ''
+    if (Test-Path -LiteralPath $PROFILE) { $ptext = Get-Content -LiteralPath $PROFILE -Raw }
+    else { [void]$needsYou.Add("Profile not found: $PROFILE") }
+    $loaded = @()
+    foreach ($m in [regex]::Matches($ptext, '(?m)^\s*\.\s+"\$HOME\\PowerShell\\([^"\r\n]+\.ps1)"')) { $loaded += $m.Groups[1].Value }
+    foreach ($f in $expected) {
+        if ((Get-JidemLoadPosition $loaded $f) -lt 0) {
+            [void]$needsYou.Add('Your profile does not load ' + $f + '. Add this line to it: . "$HOME\PowerShell\' + $f + '"')
+        }
+    }
+    foreach ($name in $loaded) {
+        if ($Global:JidemHealthNeeds.ContainsKey($name)) {
+            foreach ($need in $Global:JidemHealthNeeds[$name]) {
+                $np = Get-JidemLoadPosition $loaded $need
+                if ($np -ge 0 -and $np -gt (Get-JidemLoadPosition $loaded $name)) {
+                    [void]$needsYou.Add("Profile order: move the line for $need above the line for $name.")
+                }
+            }
+        }
+    }
+    $dp = Get-JidemLoadPosition $loaded 'Jidem.Dashboard.ps1'
+    if ($dp -ge 0 -and $dp -ne ($loaded.Count - 1)) { [void]$needsYou.Add('Profile order: Jidem.Dashboard.ps1 should be the last line.') }
+
+    # 3. Missing folders: created only with -CreateFolders, and only inside Documents or Public.
+    foreach ($m in @(Get-JidemMissingFolders)) {
+        $inside = $m.Path.StartsWith($Global:JidemDocs, [StringComparison]::OrdinalIgnoreCase) -or $m.Path.StartsWith('C:\Users\Public\', [StringComparison]::OrdinalIgnoreCase)
+        if ($inside) { [void]$fixes.Add(@{ Kind = 'folder'; Target = $m.Path; Label = $m.What; Gated = $true }) }
+        else { [void]$needsYou.Add("Folder for $($m.What) is outside Documents/Public; create it yourself: $($m.Path)") }
+    }
+
+    # --- Show the plan ---
+    Write-JidemBanner "$acct REPAIR"
+    Write-Host ($(if ($Apply) { 'APPLYING SAFE FIXES' } else { 'PREVIEW (nothing is changed; add -Apply to fix)' })) -ForegroundColor Cyan
+    Write-Host ''
+    Write-Host 'CAN FIX AUTOMATICALLY' -ForegroundColor Yellow
+    if (-not $fixes.Count) { Write-Host '  Nothing.' -ForegroundColor Green }
+    foreach ($fx in $fixes) {
+        $note = ''
+        if ($fx.Gated -and -not $CreateFolders) { $note = '   (needs -CreateFolders)' }
+        $verb = if ($fx.Kind -eq 'unblock') { 'unblock' } else { 'create ' }
+        Write-Host ('  {0}  {1}{2}' -f $verb, $(if ($fx.Kind -eq 'unblock') { $fx.Label } else { $fx.Target }), $note)
+    }
+    Write-Host ''
+    Write-Host 'NEEDS YOU (repair will not touch these)' -ForegroundColor Yellow
+    if (-not $needsYou.Count) { Write-Host '  Nothing.' -ForegroundColor Green }
+    foreach ($n in $needsYou) { Write-Host "  - $n" }
+    Write-Host ''
+
+    # --- Apply ---
+    $doable = @($fixes | Where-Object { (-not $_.Gated) -or $CreateFolders })
+    if ($Apply) {
+        if (-not $doable.Count) { Write-Host 'No automatic fixes to apply.' -ForegroundColor Green }
+        else {
+            Write-Host 'Backing up first ...' -ForegroundColor DarkGray
+            backup
+            foreach ($fx in $doable) {
+                try {
+                    if ($fx.Kind -eq 'unblock') { Unblock-File -LiteralPath $fx.Target -ErrorAction Stop; Write-Host "  unblocked  $($fx.Label)" -ForegroundColor Green }
+                    else { New-Item -ItemType Directory -Path $fx.Target -Force -ErrorAction Stop | Out-Null; Write-Host "  created    $($fx.Target)" -ForegroundColor Green }
+                }
+                catch { Write-Host "  FAILED     $($fx.Label): $($_.Exception.Message)" -ForegroundColor Red }
+            }
+            Write-Host ''
+            Write-Host 'Now run:  . $PROFILE   and then   health' -ForegroundColor DarkGray
+        }
+    }
+    elseif ($doable.Count) {
+        $hint = 'To apply: repair -Apply'
+        if (@($fixes | Where-Object { $_.Gated }).Count) { $hint += '   (add -CreateFolders to also create the folders)' }
+        Write-Host $hint -ForegroundColor DarkGray
+    }
+    Write-Host ''
+    Write-JidemFooter
 }
