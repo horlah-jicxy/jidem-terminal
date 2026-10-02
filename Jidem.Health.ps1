@@ -112,7 +112,7 @@ function health {
     if ($policy -eq 'Restricted') { Add-HealthRow 'FAIL' 'Execution policy' 'Restricted: scripts cannot run' }
     elseif ($policy -eq 'AllSigned') { Add-HealthRow 'WARN' 'Execution policy' 'AllSigned: unsigned command files will not load' }
     else { Add-HealthRow 'OK' 'Execution policy' $policy }
-    if ($Global:JidemFiles -or $Global:JidemHealthFiles.ContainsKey($acct)) { Add-HealthRow 'OK' 'Account' "$acct   ($HOME)" }
+    if ($Global:JidemHealthFiles.ContainsKey($acct)) { Add-HealthRow 'OK' 'Account' "$acct   ($HOME)" }
     else { Add-HealthRow 'WARN' 'Account' "$acct is not JIDEM or MAKIN; only generic checks apply" }
 
     # --- Profile and load order ---
