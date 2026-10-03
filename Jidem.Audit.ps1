@@ -40,7 +40,7 @@ foreach ($need in 'Write-JidemBanner', 'Write-JidemFooter') {
 $Global:JidemAuditLogs = Join-Path $HOME 'PowerShell\audit-logs'
 
 # Folder names that are program data or caches: reported, never scanned deeply.
-$Global:JidemAuditApp = '^(ana|mini)conda\d*$|^conda$|whisper|zotero|^node_modules$|^\.|^appdata$|^google ?drive$|^dropbox$|^onedrivetemp$|claude|^programdata$|^windows|^program files|^\$recycle|system volume|^recovery$|^perflogs$|^msocache$|^intel$|^config\.msi$|^boot$|huggingface|^(torch|cuda|nvidia)|virtualbox|vmware|^steam|epic games|^docker|languagetool|pandoc|tenorshare'
+$Global:JidemAuditApp = '^(ana|mini)conda\d*$|^conda$|whisper|zotero|^node_modules$|^\.|^appdata$|^google ?drive$|^dropbox$|^onedrivetemp$|claude|^programdata$|^windows(\.old)?$|^(windows)?powershell$|^program files|^\$recycle|system volume|^recovery$|^perflogs$|^msocache$|^intel$|^config\.msi$|^boot$|huggingface|^(torch|cuda|nvidia)|virtualbox|vmware|^steam|epic games|^docker|languagetool|pandoc|tenorshare'
 # Research-sensitive names: reported, never scanned, never to be moved.
 $Global:JidemAuditSens = if ($Global:JidemSortKeep) { $Global:JidemSortKeep } else { 'zoom|interview|transcript|consent|\birb\b|participant|fieldnote|taguette|houston|recording' }
 
@@ -83,18 +83,22 @@ function Get-JidemAuditStats([string]$Path, [int]$Cap) {
     $files = 0; $bytes = 0.0; $newest = $null; $oldest = $null; $capped = $false
     $groups = @{}
     $seen = 0
-    foreach ($f in (Get-ChildItem -LiteralPath $Path -Recurse -File -Force -ErrorAction SilentlyContinue)) {
-        if ($f.FullName -match '[\\/](node_modules|\.git)[\\/]') { continue }
-        $seen++
-        if ($seen -gt $Cap) { $capped = $true; break }
-        $files++
-        $bytes += $f.Length
-        if (-not $newest -or $f.LastWriteTime -gt $newest) { $newest = $f.LastWriteTime }
-        if (-not $oldest -or $f.LastWriteTime -lt $oldest) { $oldest = $f.LastWriteTime }
-        $g = Get-JidemAuditGroup $f.Extension
-        if (-not $groups.ContainsKey($g)) { $groups[$g] = 0 }
-        $groups[$g]++
-    }
+    # A folder with an unreadable entry (broken OneDrive placeholder, locked item) must not stop the audit:
+    # whatever was counted before the problem is kept, and the rest is skipped quietly.
+    try {
+        foreach ($f in (Get-ChildItem -LiteralPath $Path -Recurse -File -Force -ErrorAction SilentlyContinue)) {
+            if ($f.FullName -match '[\\/](node_modules|\.git)[\\/]') { continue }
+            $seen++
+            if ($seen -gt $Cap) { $capped = $true; break }
+            $files++
+            $bytes += $f.Length
+            if (-not $newest -or $f.LastWriteTime -gt $newest) { $newest = $f.LastWriteTime }
+            if (-not $oldest -or $f.LastWriteTime -lt $oldest) { $oldest = $f.LastWriteTime }
+            $g = Get-JidemAuditGroup $f.Extension
+            if (-not $groups.ContainsKey($g)) { $groups[$g] = 0 }
+            $groups[$g]++
+        }
+    } catch { }
     [pscustomobject]@{ Files = $files; Bytes = $bytes; Newest = $newest; Oldest = $oldest; Groups = $groups; Capped = $capped }
 }
 
