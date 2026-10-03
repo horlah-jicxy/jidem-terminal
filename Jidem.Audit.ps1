@@ -159,7 +159,9 @@ function auditpc {
         }
         foreach ($c in ($children | Where-Object { $_.PSIsContainer })) {
             if ($rt.Skip -contains $c.Name) { continue }
-            if (([int]$c.Attributes -band 0x400) -ne 0) { continue }   # junctions and links
+            # Skip real junctions and symbolic links only. OneDrive online-only folders also carry the
+            # ReparsePoint attribute, so the attribute alone would hide them; LinkType tells them apart.
+            if ($c.LinkType -eq 'Junction' -or $c.LinkType -eq 'SymbolicLink') { continue }
             $where = $rt.Label.TrimEnd('\') + '\' + $c.Name
             if ($c.Name -match $Global:JidemAuditSens -or $c.Name -match $Global:JidemAuditPrivate -or $c.Name -match $Global:JidemAuditApp) {
                 $sug = if ($c.Name -match $Global:JidemAuditSens) { 'LEAVE-SENS' } elseif ($c.Name -match $Global:JidemAuditPrivate) { 'LEAVE-PRIVATE' } else { 'LEAVE-APP' }
