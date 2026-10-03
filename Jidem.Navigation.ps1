@@ -58,7 +58,6 @@ $Global:JidemPlaces = @(
     New-JidemPlace 'pythonwork'     'JIDEM' @("$d\Development\Python")               'Python'
     New-JidemPlace 'rwork'          'JIDEM' @("$d\Development\R")                    'R'
     New-JidemPlace 'experiments'    'JIDEM' @("$d\Development\Experiments")          'Experiments'
-    New-JidemPlace 'teachingtoolkit' 'JIDEM' @("$d\GitHub\teaching-toolkit-v43", "$d\Development\Teaching-Toolkit") 'Teaching Toolkit'
     New-JidemPlace 'github'         'JIDEM' @("$d\GitHub")                           'GitHub repositories'
 
     # --- MAKIN: UC Merced ---
@@ -72,6 +71,7 @@ $Global:JidemPlaces = @(
     New-JidemPlace 'admin'          'MAKIN' @("$d\UC-Merced\Administration")        'Administration (short name)'
     New-JidemPlace 'currentwork'    'MAKIN' @("$d\Current-Work")                     'Current work'
     New-JidemPlace 'makinarchive'   'MAKIN' @("$d\Archive")                          'MAKIN archive'
+    New-JidemPlace 'toolkit'        'MAKIN' @("$d\UC-Merced\Teaching\Toolkit") 'Teaching Toolkit'
 )
 
 function Invoke-JidemGo([string]$Name) {

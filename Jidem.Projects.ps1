@@ -24,7 +24,6 @@ $d = $Global:JidemDocs
 
 $Global:JidemPinnedProjects = @(
     @{ Name = 'Academic-papers';  Group = 'ACADEMIC';    Path = "$d\GitHub\Academic-papers" }
-    @{ Name = 'Teaching-Toolkit'; Group = 'DEVELOPMENT'; Path = "$d\GitHub\teaching-toolkit-v43" }
     @{ Name = 'Personal-Editor';  Group = 'DEVELOPMENT'; Path = "$d\Development\Personal-Editor" }
     @{ Name = 'Python';           Group = 'DEVELOPMENT'; Path = "$d\Development\Python" }
     @{ Name = 'R';                Group = 'DEVELOPMENT'; Path = "$d\Development\R" }

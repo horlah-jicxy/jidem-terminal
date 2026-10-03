@@ -41,8 +41,8 @@ Add-JidemHelp 'Core' @('size') 'ANY' 'Biggest subfolders (with percentage), or b
 # --- Navigation ---
 Add-JidemHelp 'Navigation' @('places') 'ANY' 'Lists every jump command for this account and whether its folder exists.' @('places [-All]') '-All also shows the other account''s commands.'
 Add-JidemHelp 'Navigation' @('jidem', 'shared', 'archive', 'reference') 'ANY' 'Jump to Documents (jidem), the Shared bridge, the archive, or the reference folder.' @('jidem', 'shared') 'shared is C:\Users\Public\Documents\Shared, the one folder both accounts can open.'
-Add-JidemHelp 'Navigation' @('academia', 'coursework', 'development', 'personaleditor', 'pythonwork', 'rwork', 'experiments', 'teachingtoolkit', 'github', 'archives') 'JIDEM' 'Jump to a JIDEM folder.' @('academia', 'development', 'github') "In the MAKIN account these print 'assigned to the JIDEM account'."
-Add-JidemHelp 'Navigation' @('makin', 'school', 'makinarchive') 'MAKIN' 'Jump to a MAKIN folder (makin = Documents, school = UC-Merced).' @('school') "In the JIDEM account these print 'assigned to the MAKIN account'."
+Add-JidemHelp 'Navigation' @('academia', 'coursework', 'development', 'personaleditor', 'pythonwork', 'rwork', 'experiments', 'github', 'archives') 'JIDEM' 'Jump to a JIDEM folder.' @('academia', 'development', 'github') "In the MAKIN account these print 'assigned to the JIDEM account'."
+Add-JidemHelp 'Navigation' @('makin', 'school', 'toolkit', 'makinarchive') 'MAKIN' 'Jump to a MAKIN folder (makin = Documents, school = UC-Merced).' @('school') "In the JIDEM account these print 'assigned to the MAKIN account'."
 
 # --- Academic workflow (JIDEM) ---
 Add-JidemHelp 'Academic workflow' @('dissertation', 'research', 'writing', 'fieldwork', 'publications', 'analysis', 'datasets', 'papers') 'JIDEM' 'Go to the folder AND show a summary: contents (most recently active first), files changed in the last 14 days, git state.' @('dissertation [-Code] [-Quiet]', 'papers', 'research -Quiet') "-Code also opens VS Code; -Quiet just jumps. dissertation = Academic-papers\projects\dissertation (falls back to Academia\Dissertation); papers = Academic-papers\projects."

@@ -527,7 +527,7 @@ shared
 ```
 Note: shared is C:\Users\Public\Documents\Shared, the one folder both accounts can open.
 
-**`academia` / `coursework` / `development` / `personaleditor` / `pythonwork` / `rwork` / `experiments` / `teachingtoolkit` / `github` / `archives`** (JIDEM only)  
+**`academia` / `coursework` / `development` / `personaleditor` / `pythonwork` / `rwork` / `experiments` / `github` / `archives`** (JIDEM only)  
 Jump to a JIDEM folder.
 
 ```powershell
@@ -537,7 +537,7 @@ github
 ```
 Note: In the MAKIN account these print 'assigned to the JIDEM account'.
 
-**`makin` / `school` / `makinarchive`** (MAKIN only)  
+**`makin` / `school` / `toolkit` / `makinarchive`** (MAKIN only)  
 Jump to a MAKIN folder (makin = Documents, school = UC-Merced).
 
 ```powershell
@@ -775,7 +775,7 @@ Sort a loose pile (Downloads by default) into Documents\Archive by file type and
 sortdownloads
 sortdownloads -Days 30 -ShowNames
 sortdownloads -Apply
-sortdownloads -Path "$HOME\Desktop"
+sortdownloads -Path "$HOME\Desktop" -FilesOnly
 ```
 Note: The one command that moves files. Preview unless -Apply, then asks y/n. Never overwrites or deletes. Leaves recent files, partial downloads, cloud-only files, audio/video (unless -IncludeMedia) and names matching $Global:JidemSortKeep (interview, Zoom, transcript, consent, IRB ...). Folders move intact. Writes a manifest to $HOME\PowerShell\sort-logs.
 
@@ -911,7 +911,6 @@ JIDEM:
 | `pythonwork` | Python |
 | `rwork` | R |
 | `experiments` | Experiments |
-| `teachingtoolkit` | Teaching Toolkit |
 | `github` | GitHub repositories |
 
 MAKIN:
@@ -928,6 +927,7 @@ MAKIN:
 | `admin` | Administration (short name) |
 | `currentwork` | Current work |
 | `makinarchive` | MAKIN archive |
+| `toolkit` | Teaching Toolkit |
 
 Both accounts:
 
