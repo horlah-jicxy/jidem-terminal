@@ -140,7 +140,7 @@ function sortdownloads {
     }
 
     $cutoff = (Get-Date).AddDays(-$Days)
-    $left = [ordered]@{ 'recent' = 0; 'sensitive name' = 0; 'audio/video' = 0; 'cloud-only' = 0; 'partial download' = 0; 'folder (recent or hidden)' = 0 }
+    $left = [ordered]@{ 'recent' = 0; 'sensitive name' = 0; 'audio/video' = 0; 'cloud-only' = 0; 'partial download' = 0; 'shortcut' = 0; 'folder (recent or hidden)' = 0 }
     $plan = New-Object System.Collections.ArrayList
     $leftNames = New-Object System.Collections.ArrayList
 
@@ -160,6 +160,7 @@ function sortdownloads {
         }
 
         $ext = $item.Extension.ToLower()
+        if ($ext -eq '.lnk' -or $ext -eq '.url') { $left['shortcut']++; [void]$leftNames.Add("shortcut: $name"); continue }
         if ($Global:JidemSortIncomplete -contains $ext) { $left['partial download']++; [void]$leftNames.Add("partial download: $name"); continue }
         if (Test-JidemCloudOnly $item) { $left['cloud-only']++; [void]$leftNames.Add("cloud-only: $name"); continue }
         if ($name -match $Global:JidemSortKeep) { $left['sensitive name']++; [void]$leftNames.Add("sensitive name: $name"); continue }
@@ -484,7 +485,7 @@ function trash {
 }
 
 if (Get-Command Add-JidemHelp -ErrorAction SilentlyContinue) {
-    Add-JidemHelp 'Maintenance' @('sortdownloads') 'ANY' 'Sort a loose pile (Downloads by default) into Documents\Archive by file type and arrival year. Preview first; counts only, never reads inside files.' @('sortdownloads', 'sortdownloads -Days 30 -ShowNames', 'sortdownloads -Apply', 'sortdownloads -Path "$HOME\Desktop" -FilesOnly') 'The one command that moves files. Preview unless -Apply, then asks y/n. Never overwrites or deletes. Leaves recent files, partial downloads, cloud-only files, audio/video (unless -IncludeMedia) and names matching $Global:JidemSortKeep (interview, Zoom, transcript, consent, IRB ...). Folders move intact. Writes a manifest to $HOME\PowerShell\sort-logs.'
+    Add-JidemHelp 'Maintenance' @('sortdownloads') 'ANY' 'Sort a loose pile (Downloads by default) into Documents\Archive by file type and arrival year. Preview first; counts only, never reads inside files.' @('sortdownloads', 'sortdownloads -Days 30 -ShowNames', 'sortdownloads -Apply', 'sortdownloads -Path "$HOME\Desktop" -FilesOnly') 'The one command that moves files. Preview unless -Apply, then asks y/n. Never overwrites or deletes. Leaves recent files, shortcuts (.lnk, .url), partial downloads, cloud-only files, audio/video (unless -IncludeMedia) and names matching $Global:JidemSortKeep (interview, Zoom, transcript, consent, IRB ...). Folders move intact. Writes a manifest to $HOME\PowerShell\sort-logs.'
     Add-JidemHelp 'Maintenance' @('sortundo') 'ANY' 'List past sorts, or put the files from one sort back where they were.' @('sortundo', 'sortundo sort-20261002-101500-123.csv -Apply') 'Preview unless -Apply. Skips anything that has moved again or whose original name is now taken.'
     Add-JidemHelp 'Maintenance' @('trash') 'ANY' 'Send files or folders to the Recycle Bin (recoverable). Preview first. -Bin opens the Recycle Bin, -Log lists recent actions, -Empty empties it for good (you must type EMPTY).' @('trash "C:\path\to\folder"', 'trash "C:\path\to\folder" -Apply', 'trash "$HOME\Downloads\*.zip"', 'trash -Bin', 'trash -Log') 'The one command that deletes, and only into the Recycle Bin. Refuses roots, system folders, your profile and Documents, your command files, the other account, Shared, research-sensitive names (interview, Zoom, consent, IRB ...) and finance/identity names. Items over 10 GB need -AllowLarge. Writes a record to $HOME\PowerShell\trash-logs.'
 }
