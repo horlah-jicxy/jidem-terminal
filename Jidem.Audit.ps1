@@ -22,6 +22,7 @@
 #   SORT-PILE   loose files sitting directly in a root (use sortdownloads for Downloads/Desktop)
 #   LEAVE-APP   program data or caches (Anaconda, Zotero, whisper, node_modules ...): do not touch
 #   LEAVE-SENS  research-sensitive name (interview, Zoom, consent, IRB ...): do not move
+#   LEAVE-PRIVATE personal finance, identity or health name (bank, tax, passport, visa ...): keep out of the academic workspace
 #   REVIEW-MEDIA mostly audio or video: could be recordings; check before filing
 #   PHOTOS      mostly pictures
 #   CLEAN?      mostly installers or archives: probably safe to review and remove (by you)
@@ -39,9 +40,12 @@ foreach ($need in 'Write-JidemBanner', 'Write-JidemFooter') {
 $Global:JidemAuditLogs = Join-Path $HOME 'PowerShell\audit-logs'
 
 # Folder names that are program data or caches: reported, never scanned deeply.
-$Global:JidemAuditApp = '^(ana|mini)conda\d*$|^conda$|whisper|zotero|^node_modules$|^\.|^appdata$|^google ?drive$|^dropbox$|^onedrivetemp$|claude|^programdata$|^windows|^program files|^\$recycle|system volume|^recovery$|^perflogs$|^msocache$|^intel$|^config\.msi$|^boot$|huggingface|^(torch|cuda|nvidia)|virtualbox|vmware|^steam|epic games|^docker'
+$Global:JidemAuditApp = '^(ana|mini)conda\d*$|^conda$|whisper|zotero|^node_modules$|^\.|^appdata$|^google ?drive$|^dropbox$|^onedrivetemp$|claude|^programdata$|^windows|^program files|^\$recycle|system volume|^recovery$|^perflogs$|^msocache$|^intel$|^config\.msi$|^boot$|huggingface|^(torch|cuda|nvidia)|virtualbox|vmware|^steam|epic games|^docker|languagetool|pandoc|tenorshare'
 # Research-sensitive names: reported, never scanned, never to be moved.
 $Global:JidemAuditSens = if ($Global:JidemSortKeep) { $Global:JidemSortKeep } else { 'zoom|interview|transcript|consent|\birb\b|participant|fieldnote|taguette|houston|recording' }
+
+# Personal finance / identity / health names: never filed into the academic workspace.
+$Global:JidemAuditPrivate = '\bchase\b|\bbank|\btax(es)?\b|\birs\b|\bw-?2\b|1099|passport|\bvisa\b|\bi-?20\b|\bssn\b|social security|medical|insurance|payroll|paystub|mortgage|immigration'
 
 $Global:JidemAuditGroups = @{
     Writing  = @('.doc', '.docx', '.rtf', '.odt', '.txt', '.md', '.tex', '.pdf')
@@ -98,6 +102,7 @@ function Get-JidemAuditSuggestion($Name, $Stats, [bool]$IsWorkspace) {
     if ($IsWorkspace) { return 'FILED' }
     if ($Name -match '^(Downloads|Desktop)$') { return 'SORT-PILE' }
     if ($Name -match $Global:JidemAuditSens) { return 'LEAVE-SENS' }
+    if ($Name -match $Global:JidemAuditPrivate) { return 'LEAVE-PRIVATE' }
     if ($Name -match $Global:JidemAuditApp) { return 'LEAVE-APP' }
     if ($Stats.Files -eq 0) { return 'EMPTY' }
     $t = [double]$Stats.Files
@@ -105,6 +110,7 @@ function Get-JidemAuditSuggestion($Name, $Stats, [bool]$IsWorkspace) {
     $docs = (& $share 'Writing') + (& $share 'Data') + (& $share 'Slides')
     if ((& $share 'Media') -ge 0.5) { return 'REVIEW-MEDIA' }
     if ((& $share 'Installers') -ge 0.5) { return 'CLEAN?' }
+    if ($Stats.Files -le 3 -and $Stats.Bytes -ge 1GB) { return 'CLEAN?' }
     if ((& $share 'Images') -ge 0.6) { return 'PHOTOS' }
     if ((& $share 'Code') -ge 0.4) { return 'PROJECT' }
     if ($docs -ge 0.55) { return 'MIGRATE?' }
@@ -155,8 +161,8 @@ function auditpc {
             if ($rt.Skip -contains $c.Name) { continue }
             if (([int]$c.Attributes -band 0x400) -ne 0) { continue }   # junctions and links
             $where = $rt.Label.TrimEnd('\') + '\' + $c.Name
-            if ($c.Name -match $Global:JidemAuditSens -or $c.Name -match $Global:JidemAuditApp) {
-                $sug = if ($c.Name -match $Global:JidemAuditSens) { 'LEAVE-SENS' } else { 'LEAVE-APP' }
+            if ($c.Name -match $Global:JidemAuditSens -or $c.Name -match $Global:JidemAuditPrivate -or $c.Name -match $Global:JidemAuditApp) {
+                $sug = if ($c.Name -match $Global:JidemAuditSens) { 'LEAVE-SENS' } elseif ($c.Name -match $Global:JidemAuditPrivate) { 'LEAVE-PRIVATE' } else { 'LEAVE-APP' }
                 [void]$rows.Add([pscustomobject]@{ Where = $where; Files = -1; Bytes = 0.0; Newest = $c.LastWriteTime; Oldest = $null; Types = @{}; Capped = $false; Suggestion = $sug })
                 continue
             }
@@ -179,7 +185,7 @@ function auditpc {
         $types = (($r.Types.GetEnumerator() | Sort-Object Value -Descending | Select-Object -First 2 | ForEach-Object { '{0} {1}' -f $_.Key, $_.Value }) -join ', ')
         $oldest = if ($r.Oldest) { $r.Oldest.ToString('yyyy') } else { '-' }
         $files = if ($r.Capped) { ('{0:N0}+' -f $r.Files) } else { ('{0:N0}' -f $r.Files) }
-        $color = switch ($r.Suggestion) { 'MIGRATE?' { 'Green' } 'SORT-PILE' { 'Yellow' } 'REVIEW-MEDIA' { 'Yellow' } 'CLEAN?' { 'Yellow' } 'LEAVE-SENS' { 'Red' } default { 'Gray' } }
+        $color = switch ($r.Suggestion) { 'MIGRATE?' { 'Green' } 'SORT-PILE' { 'Yellow' } 'REVIEW-MEDIA' { 'Yellow' } 'CLEAN?' { 'Yellow' } 'LEAVE-SENS' { 'Red' } 'LEAVE-PRIVATE' { 'Red' } default { 'Gray' } }
         Write-Host ('{0,-42}{1,9}{2,10}  {3,-7}{4,-8}{5,-26}{6}' -f $name, $files, (Format-JidemAuditSize $r.Bytes), (Format-JidemAuditAge $r.Newest), $oldest, $types, $r.Suggestion) -ForegroundColor $color
     }
     if ($rows.Count -gt $show.Count) { Write-Host ('  ... and {0} smaller or empty folder(s) not shown (use -Top or -MinMB 0)' -f ($rows.Count - $show.Count)) -ForegroundColor DarkGray }
@@ -196,7 +202,7 @@ function auditpc {
     Write-Host 'NEXT' -ForegroundColor Yellow
     Write-Host '  MIGRATE?    copy into the workspace, check, then remove the original yourself (one folder at a time)'
     Write-Host '  SORT-PILE   sortdownloads -Path <that folder>   (preview first)'
-    Write-Host '  LEAVE-*     leave exactly where they are'
+    Write-Host '  LEAVE-*     leave exactly where they are (LEAVE-PRIVATE = finances, identity, health: never file into academic folders)'
     Write-Host '  REVIEW/CLEAN? look at them yourself first; this report cannot tell what is inside'
     Write-Host ''
 

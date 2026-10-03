@@ -389,6 +389,7 @@ oldest dates, the two main file types, and a **suggestion**:
 | `SORT-PILE` | Loose files (Downloads, Desktop, or loose files at a root) | `sortdownloads -Path <folder>`, preview first |
 | `LEAVE-APP` | Program data or caches (Anaconda, Zotero, whisper, node_modules, hidden folders) | Leave alone |
 | `LEAVE-SENS` | A research-sensitive name (interview, Zoom, consent, IRB, Houston ...) | Leave exactly where it is; never moved, never put in `Shared` |
+| `LEAVE-PRIVATE` | A personal finance, identity or health name (bank, Chase, tax, passport, visa, insurance ...) | Keep out of the academic workspace; file it yourself in a private place |
 | `REVIEW-MEDIA` | Mostly audio or video, which could be recordings | Check by hand before filing anything |
 | `PHOTOS` | Mostly pictures | Leave, or archive by hand |
 | `CLEAN?` | Mostly installers and archives | Look through them yourself; remove by hand if they are not needed |
