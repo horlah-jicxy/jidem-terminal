@@ -360,6 +360,22 @@ Safety:
   `sortundo` skips anything that has moved again or whose original name is now taken.
 - It refuses to sort your home folder, `Documents`, a drive root, or `Shared`.
 - `-WhatIf` with `-Apply` lists each move and does none.
+
+## trash: deleting safely
+
+```
+trash "C:\path\to\item"            # preview only, nothing changes
+trash "C:\path\to\item" -Apply     # asks y/n, then sends to the Recycle Bin
+trash -Bin                         # opens the Recycle Bin
+trash -Log                         # lists recent trash actions
+trash -Empty                       # empties the bin (you must type EMPTY)
+```
+
+Safety: Recycle Bin only (everything is recoverable until you empty the bin). It refuses
+drive roots, Documents, Desktop, Downloads, Shared, system folders, the other account's
+folder, the terminal's command files, research-sensitive names (interview, Zoom, consent,
+IRB, Houston) and finance/identity names. Items over 10 GB need `-AllowLarge`. It warns
+about git repos, OneDrive items and data-named files. Delete research material by hand.
 - The archive is in the local `Documents` folder, which OneDrive does **not** back up
   (section 3). Include `Documents\Archive` in your own backup.
 
@@ -838,6 +854,18 @@ sortundo sort-20261002-101500-123.csv -Apply
 ```
 Note: Preview unless -Apply. Skips anything that has moved again or whose original name is now taken.
 
+**`trash`** (both accounts)  
+Send files or folders to the Recycle Bin (never a permanent delete). Preview first.
+
+```powershell
+trash "C:\path\to\item"
+trash "C:\path\to\item" -Apply
+trash -Bin
+trash -Log
+trash -Empty
+```
+Note: Refuses drive roots, main folders, system folders, the other account's folder, command files, research-sensitive and finance/identity names. -Empty needs EMPTY typed.
+
 **`auditpc`** (both accounts)  
 Map where your files live: every top-level folder under your profile, OneDrive, Documents and C:\ with file count, size, age, main file types and a suggestion (migrate, sort, leave, review).
 
@@ -1143,6 +1171,7 @@ the Recycle Bin, yourself.
 | v1.0.0 | The frozen architecture: Phases 1 to 12 and `repair`. |
 | v1.1.0 | Additive: `Jidem.WritingLog.ps1` (`syncwords`, `wordsum`, `logwords`, `countwords`), `coursework` jump command, desk actions for `syncwords` and `wordsum`. |
 | v1.3.0 | `Jidem.Accounts.ps1`: the account prompt and `handoff` (private cross-account copy) |
+| v1.4.0 | `trash` (in `Jidem.Sort.ps1`): Recycle Bin only, preview first, refuses sensitive and system paths |
 | v1.2.0 | `Jidem.Sort.ps1` (`sortdownloads`, `sortundo`): the one command that moves files, narrowly amended into the contract. `Jidem.Audit.ps1` (`auditpc`): report-only map of where files live. |
 | Writing Timer 1.6.0 | Session modes, typed-versus-pasted tally, AI-use note, local dates and offsets, 30/45-minute presets, Ctrl+Alt+W, `warnWhenUntracked`. Save & Push now defaults to your last session note. |
 

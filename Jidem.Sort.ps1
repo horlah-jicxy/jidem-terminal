@@ -1,5 +1,5 @@
 # ==============================================================================
-# Jidem.Sort.ps1 - v1.2.0 sort a pile of loose files into the Archive (both accounts)
+# Jidem.Sort.ps1 - v1.2.0 sort loose files into the Archive; v1.4.0 safe delete (both accounts)
 #
 # Needs Jidem.Core.ps1 loaded first. Add to $PROFILE AFTER Jidem.Help.ps1 and
 # BEFORE Jidem.Dashboard.ps1 (the dashboard must stay the last line):
@@ -12,6 +12,11 @@
 #                      Documents\Archive\<folder name>\<Category>\<Year>\
 #   sortundo [<manifest>] [-Apply] [-Yes]
 #                      lists past sorts; with a manifest name, puts those files back
+#   trash <path> [<path> ...] [-Apply] [-Yes] [-AllowLarge]   (v1.4.0)
+#                      sends files or folders to the RECYCLE BIN (recoverable). PREVIEW unless -Apply.
+#   trash -Bin         open the Recycle Bin (right-click an item > Restore)
+#   trash -Log         list recent trash actions
+#   trash -Empty       empty the Recycle Bin for good (you must type EMPTY)
 #
 # It never reads inside a file. It looks only at names, extensions, sizes and dates, and the
 # preview prints counts, not file names (use -ShowNames to see names on your own screen).
@@ -302,7 +307,184 @@ function sortundo {
     Write-Host ('Put back {0:N0}, failed {1:N0}.' -f $back, $failed) -ForegroundColor Green
 }
 
+# ---------- trash (v1.4.0) ----------
+#
+# The ONLY command that deletes, and it deletes the recoverable way: into the Recycle Bin, never
+# permanently (except -Empty, which asks you to type EMPTY). Preview unless -Apply, then y/n.
+# It refuses: drive roots, your profile and Documents folders, system folders, your command files,
+# the other account's folders, the Shared bridge itself, anything with a research-sensitive name
+# (interview, Zoom, consent, IRB ...) and anything with a personal finance/identity name. Those
+# you decide by hand in File Explorer. It writes a record of every action to
+# $HOME\PowerShell\trash-logs.
+
+# These are normally defined by the Audit and Accounts files; fall back so trash never sees an empty pattern.
+if (-not $Global:JidemAuditPrivate) { $Global:JidemAuditPrivate = '\bchase\b|\bbank|\btax(es)?\b|\birs\b|\bw-?2\b|1099|passport|\bvisa\b|\bi-?20\b|\bssn\b|social security|medical|insurance|payroll|paystub|mortgage|immigration' }
+if (-not $Global:JidemHandoffData)  { $Global:JidemHandoffData  = '\.(db|sqlite3?|mdb|accdb)$|roster|grade|student' }
+if (-not $Global:JidemHandoffRoot)  { $Global:JidemHandoffRoot  = 'C:\Users\Public\Documents\Shared\_handoff-private' }
+
+$Global:JidemTrashLogs    = Join-Path $HOME 'PowerShell\trash-logs'
+$Global:JidemTrashTestDir = ''     # tests only: move here instead of the Recycle Bin
+$Global:JidemTrashLargeGB = 10
+
+function Get-JidemTrashRefusal([string]$Full) {
+    $f = $Full.TrimEnd('\', '/')
+    if (-not $f) { return 'a drive root' }
+    $h = $HOME.TrimEnd('\', '/')
+    $rootRaw = [IO.Path]::GetPathRoot($Full)
+    $root = if ($rootRaw) { $rootRaw.TrimEnd('\', '/') } else { '' }
+    $guard = @($h, ($h + '\Documents'), ($h + '\OneDrive'), ($h + '\Desktop'), ($h + '\Downloads'), ($h + '\PowerShell'),
+               ($h + '\Documents\Academia'), ($h + '\Documents\UC-Merced'), ($h + '\Documents\GitHub'), ($h + '\Documents\Development'), ($h + '\Documents\Current-Work'), ($h + '\Documents\Archive'),
+               'C:\Users', 'C:\Users\Public', 'C:\Users\Public\Documents', 'C:\Users\Public\Documents\Shared', $Global:JidemHandoffRoot)
+    if ($root -and ($f -ieq $root)) { return 'a drive root' }
+    if ($guard -contains $f) { return 'a main folder (your profile, Documents, a workspace folder, Archive, Desktop, Downloads, OneDrive, PowerShell or Shared)' }
+    if ($f -match '^[A-Za-z]:\\(Windows|Program Files|Program Files \(x86\)|ProgramData)(\\|$)') { return 'a system folder' }
+    if ($f -match '^[A-Za-z]:\\Users\\([^\\]+)(\\|$)') {
+        $who = $Matches[1]
+        if ($who -ine 'Public' -and $who -ine (Split-Path $HOME -Leaf)) { return ('the ' + $who + ' account''s folder (use that account)') }
+    }
+    if ($f -like ($h + '\PowerShell\Jidem*')) { return 'one of your command files' }
+    if ($f -match $Global:JidemSortKeep) { return 'a research-sensitive name (interview, Zoom, consent, IRB, Houston ...)' }
+    if ($f -match $Global:JidemAuditPrivate) { return 'a personal finance or identity name' }
+    $null
+}
+
+function Get-JidemTrashStats($Item) {
+    if (-not $Item.PSIsContainer) { return [pscustomobject]@{ Files = 1; Bytes = [double]$Item.Length; Newest = $Item.LastWriteTime; Git = $false; Data = ($Item.Name -match $Global:JidemHandoffData) } }
+    $files = 0; $bytes = 0.0; $newest = $null; $data = $false
+    foreach ($f in @(Get-ChildItem -LiteralPath $Item.FullName -Recurse -File -Force -ErrorAction SilentlyContinue)) {
+        $files++; $bytes += $f.Length
+        if (-not $newest -or $f.LastWriteTime -gt $newest) { $newest = $f.LastWriteTime }
+        if ($f.Name -match $Global:JidemHandoffData) { $data = $true }
+    }
+    [pscustomobject]@{ Files = $files; Bytes = $bytes; Newest = $newest; Git = (Test-Path -LiteralPath (Join-Path $Item.FullName '.git')); Data = $data }
+}
+
+function trash {
+    [CmdletBinding(SupportsShouldProcess = $true)]
+    param(
+        [Parameter(Position = 0, ValueFromRemainingArguments = $true)][string[]]$Path,
+        [switch]$Apply,
+        [switch]$Yes,
+        [switch]$AllowLarge,
+        [switch]$Bin,
+        [switch]$Log,
+        [switch]$Empty
+    )
+    if ($Bin) { try { Start-Process explorer.exe 'shell:RecycleBinFolder' } catch { Write-Host 'Could not open the Recycle Bin.' -ForegroundColor Yellow }; return }
+
+    if ($Log) {
+        if (-not (Test-Path -LiteralPath $Global:JidemTrashLogs)) { Write-Host 'No trash actions recorded yet.' -ForegroundColor Yellow; return }
+        foreach ($f in @(Get-ChildItem -LiteralPath $Global:JidemTrashLogs -Filter 'trash-*.csv' | Sort-Object LastWriteTime -Descending | Select-Object -First 10)) {
+            $rows = @(Import-Csv -LiteralPath $f.FullName)
+            Write-Host ('{0}   {1} item(s)' -f $f.Name, $rows.Count) -ForegroundColor Cyan
+            foreach ($r in $rows) { Write-Host ('   {0}   {1}   {2}' -f $r.Result, $r.Type, $r.Path) }
+        }
+        Write-Host 'To get something back: trash -Bin, then right-click it and choose Restore.' -ForegroundColor DarkGray
+        return
+    }
+
+    if ($Empty) {
+        try {
+            $shell = New-Object -ComObject Shell.Application
+            $items = @($shell.Namespace(10).Items())
+            $sz = 0.0; foreach ($i in $items) { $sz += [double]$i.Size }
+            Write-Host ('Recycle Bin: {0:N0} item(s), {1:N1} GB. Emptying it is PERMANENT.' -f $items.Count, ($sz / 1GB)) -ForegroundColor Yellow
+            if ($items.Count -eq 0) { return }
+            $ans = Read-Host 'Type EMPTY to empty it (anything else cancels)'
+            if ($ans -ceq 'EMPTY') { Clear-RecycleBin -Force -ErrorAction Stop; Write-Host 'Recycle Bin emptied.' -ForegroundColor Green } else { Write-Host 'Cancelled.' -ForegroundColor Yellow }
+        } catch { Write-Host ('Could not empty the Recycle Bin: ' + $_.Exception.Message) -ForegroundColor Red }
+        return
+    }
+
+    if (-not $Path -or $Path.Count -eq 0) {
+        Write-Host 'trash: send files or folders to the Recycle Bin (recoverable). Preview first.' -ForegroundColor Cyan
+        Write-Host '  trash "C:\path\to\folder"            preview'
+        Write-Host '  trash "C:\path\to\folder" -Apply     do it (asks y/n)'
+        Write-Host '  trash -Bin | -Log | -Empty'
+        return
+    }
+
+    # resolve the targets (wildcards allowed), drop duplicates and children of a chosen parent
+    $found = New-Object System.Collections.ArrayList
+    $notFound = New-Object System.Collections.ArrayList
+    foreach ($p in $Path) {
+        if ($p -match '[\*\?]') { $hits = @(Get-ChildItem -Path $p -Force -ErrorAction SilentlyContinue) } else { $hits = @(Get-Item -LiteralPath $p -Force -ErrorAction SilentlyContinue) }
+        if ($hits.Count -eq 0) { [void]$notFound.Add($p) }
+        foreach ($h in $hits) { if (-not (@($found | Where-Object { $_.FullName -ieq $h.FullName }).Count)) { [void]$found.Add($h) } }
+    }
+    $targets = New-Object System.Collections.ArrayList
+    foreach ($i in $found) {
+        $covered = $false
+        foreach ($j in $found) { if ($j.PSIsContainer -and $i.FullName -ne $j.FullName -and $i.FullName.StartsWith($j.FullName.TrimEnd('\', '/') + [IO.Path]::DirectorySeparatorChar, [StringComparison]::OrdinalIgnoreCase)) { $covered = $true } }
+        if (-not $covered) { [void]$targets.Add($i) }
+    }
+
+    Write-JidemBanner ('TRASH (' + $(if ($Apply) { 'APPLY' } else { 'PREVIEW' }) + ')')
+    $plan = New-Object System.Collections.ArrayList
+    $n = 0
+    foreach ($t in $targets) {
+        $n++
+        $why = Get-JidemTrashRefusal $t.FullName
+        if ($why) { Write-Host ('{0,2}. REFUSED  {1}' -f $n, $t.FullName) -ForegroundColor Red; Write-Host ('      it is ' + $why + '. Decide this one by hand in File Explorer.') -ForegroundColor Red; continue }
+        $st = Get-JidemTrashStats $t
+        $age = if ($st.Newest) { $d = ((Get-Date) - $st.Newest).TotalDays; if ($d -lt 1) { 'today' } elseif ($d -lt 30) { ('{0:N0}d' -f $d) } elseif ($d -lt 365) { ('{0:N0}mo' -f ($d / 30)) } else { ('{0:N1}y' -f ($d / 365)) } } else { '-' }
+        $kind = if ($t.PSIsContainer) { 'folder' } else { 'file' }
+        $mb = if ($st.Bytes -ge 1GB) { ('{0:N1} GB' -f ($st.Bytes / 1GB)) } else { ('{0:N1} MB' -f ($st.Bytes / 1MB)) }
+        Write-Host ('{0,2}. {1,-6} {2}' -f $n, $kind, $t.FullName) -ForegroundColor White
+        Write-Host ('      {0:N0} file(s), {1}, newest {2}' -f $st.Files, $mb, $age) -ForegroundColor DarkGray
+        $big = ($st.Bytes -gt ($Global:JidemTrashLargeGB * 1GB))
+        if ($big -and -not $AllowLarge) { Write-Host ('      REFUSED: bigger than ' + $Global:JidemTrashLargeGB + ' GB; the Recycle Bin may be too small and Windows would delete it permanently. Add -AllowLarge if you accept that.') -ForegroundColor Red; continue }
+        if ($t.FullName -match '[\\/]OneDrive([\\/]|$)') { Write-Host '      note: inside OneDrive, so it also leaves the cloud copy (recoverable online for 30 days).' -ForegroundColor Yellow }
+        if ($st.Git) { Write-Host '      note: a git repository. Check it is pushed, or the history goes with it.' -ForegroundColor Yellow }
+        if ($st.Data) { Write-Host '      note: contains database, roster, grade or student-named files.' -ForegroundColor Yellow }
+        if ($st.Newest -and ((Get-Date) - $st.Newest).TotalDays -lt 7) { Write-Host '      note: changed in the last 7 days.' -ForegroundColor Yellow }
+        [void]$plan.Add([pscustomobject]@{ Item = $t; Kind = $kind; Files = $st.Files; Bytes = $st.Bytes })
+    }
+    foreach ($nf in $notFound) { Write-Host ('     not found: ' + $nf) -ForegroundColor DarkGray }
+    $tot = ($plan | Measure-Object Bytes -Sum).Sum; if (-not $tot) { $tot = 0 }
+    Write-Host ''
+    Write-Host ('{0:N0} item(s), {1:N1} MB would go to the Recycle Bin.' -f $plan.Count, ($tot / 1MB)) -ForegroundColor Cyan
+    if ($plan.Count -eq 0) { Write-JidemFooter; return }
+    if (-not $Apply) { Write-Host 'Preview only. Nothing was deleted. Add -Apply to send them to the Recycle Bin.' -ForegroundColor Green; Write-JidemFooter; return }
+    if (-not $Yes -and -not $WhatIfPreference) {
+        $ans = Read-Host ('Send {0:N0} item(s) to the Recycle Bin? (y/n)' -f $plan.Count)
+        if ($ans -notmatch '^(y|yes)$') { Write-Host 'Cancelled. Nothing was deleted.' -ForegroundColor Yellow; Write-JidemFooter; return }
+    }
+    $rows = New-Object System.Collections.ArrayList
+    $ok = 0; $bad = 0
+    foreach ($e in $plan) {
+        $full = $e.Item.FullName
+        if ($PSCmdlet.ShouldProcess($full, 'send to Recycle Bin')) {
+            try {
+                if ($Global:JidemTrashTestDir) {
+                    if (-not (Test-Path -LiteralPath $Global:JidemTrashTestDir)) { New-Item -ItemType Directory -Path $Global:JidemTrashTestDir -Force | Out-Null }
+                    Move-Item -LiteralPath $full -Destination (Join-Path $Global:JidemTrashTestDir $e.Item.Name) -ErrorAction Stop
+                } else {
+                    Add-Type -AssemblyName Microsoft.VisualBasic
+                    if ($e.Kind -eq 'folder') { [Microsoft.VisualBasic.FileIO.FileSystem]::DeleteDirectory($full, 'OnlyErrorDialogs', 'SendToRecycleBin') }
+                    else { [Microsoft.VisualBasic.FileIO.FileSystem]::DeleteFile($full, 'OnlyErrorDialogs', 'SendToRecycleBin') }
+                }
+                if (Test-Path -LiteralPath $full) { throw 'still there after the delete' }
+                $ok++; $res = 'trashed'
+            } catch { $bad++; $res = ('FAILED: ' + $_.Exception.Message) }
+            [void]$rows.Add([pscustomobject]@{ Time = (Get-Date).ToString('s'); Account = $Global:JidemAccount; Path = $full; Type = $e.Kind; Files = $e.Files; Bytes = $e.Bytes; Result = $res })
+        }
+    }
+    Write-Host ('Sent {0:N0} to the Recycle Bin, {1:N0} failed.' -f $ok, $bad) -ForegroundColor $(if ($bad) { 'Yellow' } else { 'Green' })
+    if ($rows.Count) {
+        try {
+            if (-not (Test-Path -LiteralPath $Global:JidemTrashLogs)) { New-Item -ItemType Directory -Path $Global:JidemTrashLogs -Force | Out-Null }
+            $lf = Join-Path $Global:JidemTrashLogs ('trash-' + (Get-Date).ToString('yyyyMMdd-HHmmss-fff') + '.csv')
+            $rows | Export-Csv -LiteralPath $lf -NoTypeInformation -Encoding UTF8
+            Write-Host ('Record: ' + $lf) -ForegroundColor DarkGray
+        } catch { }
+    }
+    Write-Host 'To get something back: trash -Bin, then right-click it and choose Restore.' -ForegroundColor DarkGray
+    Write-JidemFooter
+}
+
 if (Get-Command Add-JidemHelp -ErrorAction SilentlyContinue) {
     Add-JidemHelp 'Maintenance' @('sortdownloads') 'ANY' 'Sort a loose pile (Downloads by default) into Documents\Archive by file type and arrival year. Preview first; counts only, never reads inside files.' @('sortdownloads', 'sortdownloads -Days 30 -ShowNames', 'sortdownloads -Apply', 'sortdownloads -Path "$HOME\Desktop" -FilesOnly') 'The one command that moves files. Preview unless -Apply, then asks y/n. Never overwrites or deletes. Leaves recent files, partial downloads, cloud-only files, audio/video (unless -IncludeMedia) and names matching $Global:JidemSortKeep (interview, Zoom, transcript, consent, IRB ...). Folders move intact. Writes a manifest to $HOME\PowerShell\sort-logs.'
     Add-JidemHelp 'Maintenance' @('sortundo') 'ANY' 'List past sorts, or put the files from one sort back where they were.' @('sortundo', 'sortundo sort-20261002-101500-123.csv -Apply') 'Preview unless -Apply. Skips anything that has moved again or whose original name is now taken.'
+    Add-JidemHelp 'Maintenance' @('trash') 'ANY' 'Send files or folders to the Recycle Bin (recoverable). Preview first. -Bin opens the Recycle Bin, -Log lists recent actions, -Empty empties it for good (you must type EMPTY).' @('trash "C:\path\to\folder"', 'trash "C:\path\to\folder" -Apply', 'trash "$HOME\Downloads\*.zip"', 'trash -Bin', 'trash -Log') 'The one command that deletes, and only into the Recycle Bin. Refuses roots, system folders, your profile and Documents, your command files, the other account, Shared, research-sensitive names (interview, Zoom, consent, IRB ...) and finance/identity names. Items over 10 GB need -AllowLarge. Writes a record to $HOME\PowerShell\trash-logs.'
 }

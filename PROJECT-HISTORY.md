@@ -167,6 +167,12 @@ Your goals, in your own order of priority:
   Documents, `C:\`) with counts, sizes, ages and a suggestion per folder, never opening a
   file. It is the report that decides what to migrate, sort or leave, one folder at a time.
 
+- **Trash (v1.4.0):** cleanup after migration needed deleting, and deleting by hand in a
+  cluttered Explorer is where mistakes happen. `trash <path>` previews, then (with `-Apply`
+  and a y/n) sends to the Recycle Bin, so every deletion is recoverable. It refuses research
+  and finance names, main folders and system folders. Emptying the bin is a separate,
+  typed-confirmation step.
+
 - **Account prompt and handoff (v1.3.0):** about seven of the build's errors came from not
   knowing which account a window belonged to, and every transfer between accounts repeated
   the same eight steps. The prompt now shows `[JIDEM]` or `[MAKIN]` (red warning in the other
