@@ -31,7 +31,43 @@ previews, or creates; you do the moving and the deleting.
 
 ---
 
-## 2. What you were trying to achieve
+## 2. Where this started, and what you were trying to achieve
+
+### The origin
+
+This did not start as a filing project. It started with a **laptop hunt**. The machine you had
+was struggling with the workload: academic research, VS Code, Python and R, GitHub, local AI
+and several development environments. The sharpest symptom was **Ollama**: with only about
+1.2 GB of RAM free and Intel integrated graphics, local models ran on the CPU and were slow.
+
+That led to a wider realisation: the problem was not only "I need a faster laptop". It became
+
+    better hardware
+      -> a better computing environment
+        -> better organisation
+          -> separate workspaces (JIDEM and MAKIN)
+            -> controlled connections (Shared, handoff)
+              -> automation and tooling
+
+and that chain is the JIDEM/MAKIN workspace architecture.
+
+### Where the build stands against that chain (2 October 2026)
+
+| Step | Status |
+|---|---|
+| Better hardware | Your decision, separate from the tooling |
+| Better computing environment | Not yet addressed (RAM, background load, local model size, two sessions open at once) |
+| Better organisation | Mostly done |
+| Separate workspaces | Done |
+| Controlled connections | Done (Shared, `handoff`, the word-count file) |
+| Automation and tooling | Done enough for now |
+
+A cleaner workspace saves disk space and clutter, not RAM. The environment step is a
+separate piece of work. Everything built so far is hardware independent: a new machine can be
+set up from the repo, the manual, `backup` and `handoff`.
+
+### The goals
+
 
 Your goals, in your own order of priority:
 
