@@ -915,12 +915,12 @@ administration
 ### System
 
 **`health`** (both accounts)  
-Checks the whole setup: PowerShell, profile and its load order, every command file, expected commands, git, VS Code, folders, backups.
+Checks the whole setup: PowerShell, profile and its load order, every command file, expected commands, git, VS Code, folders, backups, disconnected sessions.
 
 ```powershell
 health
 ```
-Note: Read-only. Shows OK / WARN / FAIL.
+Note: Read-only. Shows OK / WARN / FAIL. Warns when another (or your own) session is disconnected, because it keeps its apps running and holds memory; run logoff followed by the ID it shows, after saving that session's work.
 
 **`validate`** (both accounts)  
 Lists any folder your commands point at that does not exist, with the command to create it.

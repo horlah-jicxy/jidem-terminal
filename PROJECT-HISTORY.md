@@ -173,6 +173,10 @@ Your goals, in your own order of priority:
   and finance names, main folders and system folders. Emptying the bin is a separate,
   typed-confirmation step.
 
+- **Health warns about disconnected sessions:** a forgotten disconnected account session held
+  9.3 GB of the 15.7 GB and looked like a hardware problem. `health` now shows a WARN with the
+  session ID and the `logoff` command. Report only; it never logs anyone off.
+
 - **Account prompt and handoff (v1.3.0):** about seven of the build's errors came from not
   knowing which account a window belonged to, and every transfer between accounts repeated
   the same eight steps. The prompt now shows `[JIDEM]` or `[MAKIN]` (red warning in the other

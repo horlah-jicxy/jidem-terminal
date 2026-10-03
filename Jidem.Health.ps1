@@ -9,7 +9,7 @@
 #   health      check the whole setup and report OK / WARN / FAIL for each part:
 #               PowerShell and execution policy, profile and its load order, every command
 #               file (exists, parses, no stray characters, not blocked), expected commands,
-#               git, VS Code, the Shared bridge, and when you last made a backup
+#               git, VS Code, the Shared bridge, and when you last made a backup, and any disconnected sessions
 #   validate    check every folder the commands point at (places, projects, writing roots)
 #               and list the ones that do not exist, with the command to create them
 #   repair      PREVIEW safe fixes (unblock files, create missing folders); -Apply does them after a backup
@@ -178,6 +178,30 @@ function health {
     if (-not $last) { Add-HealthRow 'WARN' 'Backups' 'none yet. Run: backup' }
     elseif (((Get-Date) - $last.LastWriteTime).TotalDays -gt 30) { Add-HealthRow 'WARN' 'Backups' ("last backup {0}. Run: backup" -f (Format-Age $last.LastWriteTime)) }
     else { Add-HealthRow 'OK' 'Backups' ("last backup {0}" -f (Format-Age $last.LastWriteTime)) }
+
+    # --- Disconnected sessions (they keep their apps running and hold memory) ---
+    $sessLine = $null
+    try {
+        $q = @(quser 2>$null)
+        $disc = @()
+        foreach ($ln in $q) {
+            if ($ln -match '^\s*>?(\S+)\s+(?:(\S+)\s+)?(\d+)\s+Disc\b') { $disc += [pscustomobject]@{ User = $Matches[1]; Id = [int]$Matches[3] } }
+        }
+        if ($q.Count -eq 0) {
+            Add-HealthRow 'INFO' 'Sessions' 'could not read the session list (quser)'
+        } elseif ($disc.Count -eq 0) {
+            Add-HealthRow 'OK' 'Sessions' 'no disconnected sessions'
+        } else {
+            foreach ($d in $disc) {
+                $mb = 0
+                try { $mb = [int]((Get-Process -ErrorAction SilentlyContinue | Where-Object { $_.SessionId -eq $d.Id } | Measure-Object WorkingSet -Sum).Sum / 1MB) } catch { }
+                $use = if ($mb -gt 0) { (' using about {0:N1} GB' -f ($mb / 1024)) } else { '' }
+                Add-HealthRow 'WARN' 'Sessions' ("{0} has a disconnected session (ID {1}){2}. Save its work, then run: logoff {1}" -f $d.User, $d.Id, $use)
+            }
+        }
+    } catch {
+        Add-HealthRow 'INFO' 'Sessions' 'could not read the session list'
+    }
 
     # --- Print ---
     Write-JidemBanner "$acct SYSTEM HEALTH"
