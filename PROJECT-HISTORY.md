@@ -233,6 +233,11 @@ failed with "Unexpected token".
 - Typing a **quoted string** on its own (`".\\powershell\jidem.navigation.ps1"`) - it just
   prints back; use `notepad` or `code` to open it.
 - `pull` instead of `git pull`; `olaces` for `places`; `-SSHA` as if it were a parameter.
+- Pasting a whole block of old console output (prompts, banners, results) back into the
+  window: PowerShell runs every line. `PS C:\...>` at the start of a line runs the alias for
+  `Get-Process`, and any line that happens to match a real command (`Teaching`, `(empty)`)
+  runs it. Harmless here because those commands only read, but it is why read-only design
+  matters.
 - **Lesson:** a command line is `command arguments`. Strings and paths alone do nothing.
 - **What got built:** `findfile`/`findtext` accept a scope word (a folder name or jump
   name) after the search term, which is what `-SSHA` was reaching for.

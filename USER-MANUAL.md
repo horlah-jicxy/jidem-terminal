@@ -979,6 +979,7 @@ Also check the prompt. You may be in the wrong account.
 | "File ... cannot be loaded ... not digitally signed" | Downloaded file is blocked | `Unblock-File "<path>"`, or `repair -Apply`. |
 | Parse error with strange characters (like an arrow turned into garbage) | Non-ASCII in a file | Keep command files ASCII-only. `health` finds the line. |
 | "call depth overflow" on `. $PROFILE` | A profile load line is inside a command file | Delete that line from the command file. |
+| A flood of errors after pasting a block (`Get-Process : A positional parameter...`, banner lines "not recognized") | Console output was pasted INTO PowerShell; it runs every line, and `PS` at the start of a prompt is the alias for `Get-Process` | Nothing is harmed (check for stray command names that ran). Paste only a command line, never prompts or results. `cls` clears the screen. |
 | A quoted path just prints back | A string by itself is not a command | Use `notepad "<path>"` or `code "<path>"`. |
 | `pull` not recognized | It is a git subcommand | `git pull`. |
 | `fatal: not a git repository` | Plain `git` in a folder with no repo | `gitroot`, or go to the repo first. |
