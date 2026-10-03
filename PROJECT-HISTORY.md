@@ -379,3 +379,30 @@ luck. That habit is part of the system now.
 - Parked on purpose: finance tracker and automations, until organisation and the daily
   drafting habit are steady.
 - Next document: the user manual.
+
+## 9. Laptop decision (recorded October 2026)
+
+Why this is here: the project began with a struggling laptop, and the first diagnosis was
+hardware. It turned out mostly to be clutter: a disconnected second session was running the
+same apps twice. Logging that session off took free memory from about 1.2 GB to 7.6 GB of
+15.7 GB, with nothing bought or deleted. So the upgrade is a want with evidence behind it,
+not a rescue.
+
+- **Current machine:** refurbished, about $1,000 (eBay). The used market works for this.
+- **When:** about a year from now, buying the latest generation or the previous top model on
+  discount. Not before a measured need.
+- **What lasts five years (laptop GPUs cannot be upgraded, so this is the day-one choice):**
+  16 GB or more of VRAM; RAM that can be upgraded (SODIMM, not soldered), 32 GB to start;
+  two M.2 slots; Thunderbolt 4/5 or USB4 (the upgrade path, via an external GPU or drives);
+  sustained-load cooling; a 3-year or longer warranty.
+- **Touch preference:** touch plus 16 GB VRAM is a thin overlap. Check what exists then.
+  Unified-memory machines (for example ASUS ROG Flow Z13 class) are a possible touch route
+  for large models, but they are slower, have no CUDA and solder the RAM. Verify before
+  deciding.
+- **Findings from the October 2026 search (snippets, not verified listings):** refurbished
+  RTX 4080 laptops (12 GB VRAM) were about $1,560 to $2,000 and are 18-inch gaming
+  machines; none was listed as touch. The Yoga Pro 9i tops out at the RTX 5070 (8 GB VRAM),
+  from about $1,800. Lenovo warned of rising prices.
+- **Until then:** keep the current machine, work in one account at a time, use the cloud
+  for heavy AI, and note every time local AI actually limited the work. That log is the
+  spec.
