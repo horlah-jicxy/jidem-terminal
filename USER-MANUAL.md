@@ -1,6 +1,6 @@
 # JIDEM TERMINAL - User Manual
 
-Version: terminal v1.2.0 (architecture frozen at v1.0.0, amended at v1.1.0 and v1.2.0), Writing Timer 1.6.0.
+Version: terminal v1.3.0 (architecture frozen at v1.0.0, amended at v1.1.0 and v1.2.0), Writing Timer 1.6.0.
 Written 2 October 2026. For the story of how this was built, and the mistakes that shaped it,
 see `PROJECT-HISTORY.md`. For the technical contract, see `ARCHITECTURE.md`.
 
@@ -59,7 +59,9 @@ Five rules the whole system obeys. They are why you can trust it:
 
 ## 2. Your first five minutes
 
-Open PowerShell. Look at the prompt, because it tells you which account you are in:
+Open PowerShell. Look at the prompt, because it tells you which account you are in. Since v1.3.0 it says so in colour: `[JIDEM]` in cyan or `[MAKIN]` in magenta, then the folder. If you `cd` into the other account's folder it adds a red warning (`!! in jidem's folder, but this window is MAKIN`), because a window's account never changes just because the folder does. The window title shows the account too.
+
+Before v1.3.0 the prompt showed only the folder:
 
 - `PS C:\Users\jidem>` means JIDEM.
 - `PS C:\Users\makin>` means MAKIN.
@@ -96,15 +98,15 @@ file; `status` is the command.
 
 ### Load order (matters)
 
-Core first. Dashboard last. The writing-log, sort and audit files go after Help and before Dashboard.
+Core first. Dashboard last. The writing-log, sort, audit and accounts files go after Help and before Dashboard.
 
 JIDEM profile, in order: `JidemCommands`, `Jidem.Core`, `Jidem.Navigation`,
 `Jidem.Projects`, `Jidem.Git`, `Jidem.Academia`, `Jidem.Writing`, `Jidem.Search`,
-`Jidem.Maintenance`, `Jidem.Health`, `Jidem.Help`, `Jidem.WritingLog`, `Jidem.Sort`, `Jidem.Audit`, `Jidem.Dashboard`.
+`Jidem.Maintenance`, `Jidem.Health`, `Jidem.Help`, `Jidem.WritingLog`, `Jidem.Sort`, `Jidem.Audit`, `Jidem.Accounts`, `Jidem.Dashboard`.
 
 MAKIN profile, in order: `JidemCommands`, `Jidem.Core`, `Jidem.Navigation`, `Jidem.Git`,
 `Jidem.Search`, `Jidem.Maintenance`, `Jidem.Writing`, `Jidem.Teaching`, `Jidem.Health`,
-`Jidem.Help`, `Jidem.WritingLog`, `Jidem.Sort`, `Jidem.Audit`, `Jidem.Dashboard`.
+`Jidem.Help`, `Jidem.WritingLog`, `Jidem.Sort`, `Jidem.Audit`, `Jidem.Accounts`, `Jidem.Dashboard`.
 
 Each line looks like `. "$HOME\PowerShell\Jidem.Core.ps1"` (a dot, a space, then the path).
 That line belongs only in the profile, never inside a command file. (Putting it inside a
@@ -401,6 +403,54 @@ folder counts at most 20,000 files (shown as `20,000+`). Folders that are progra
 that have a research-sensitive name are listed but never scanned. Copying a folder into the
 workspace is always done by you, as with the coursework: copy, verify, delete the original
 through the Recycle Bin yourself.
+
+### 6.4 Moving folders between accounts: `handoff`
+
+`handoff` replaces the manual pattern in 6.1. It does the same thing, safely, in two commands.
+It **copies** (never moves) through a temporary folder,
+`C:\Users\Public\Documents\Shared\_handoff-private`, that only the `jidem` and `makin`
+accounts (and SYSTEM) can open. The permission is checked every time, and nothing is copied if it
+is not private. Your originals are never changed.
+
+In the account you are leaving (preview first, then `-Apply`):
+
+```powershell
+handoff send "$HOME\Documents\Some Folder"
+handoff send "$HOME\Documents\Some Folder" -Apply
+```
+
+In the other account (sign in, check the prompt):
+
+```powershell
+handoff status
+handoff receive "Some Folder"
+handoff receive "Some Folder" -Apply
+```
+
+Without `-To`, the files land in `Documents\Incoming\<label>`. Add `-To "folder"` to choose
+the destination, for example `-To "$HOME\Documents\UC-Merced\Teaching\Toolkit"`.
+
+What it does for you:
+
+- Sends the folder under its own name (or `-Name label`) and records a manifest.
+- On `receive`: refuses to receive in the same account that sent it; never overwrites (an existing
+  file is skipped and reported); checks that every copied file is present with the same size;
+  and only then removes the temporary copy. If anything is off it keeps the handoff.
+- `handoff status` lists what is waiting. `handoff clear "label"` removes a temporary copy
+  you no longer want (originals are never touched).
+
+What it will not carry:
+
+- **Research-sensitive names** (interview, Zoom, transcript, consent, IRB, Taguette, Houston,
+  recording, PDFgear) and **finance/identity names** (bank, tax, passport, visa, insurance ...).
+  A folder with such a name is refused outright.
+- Build and cache folders (`.git`, `node_modules`, `__pycache__`, virtual environments).
+- **Databases, rosters and grade files** from folders, because they may hold student or personal
+  data. Add `-IncludeData` to carry them. The handoff folder is private, but think first. If you
+  name one file explicitly (`handoff send "...\roster.csv"`), the data check does not apply to it.
+
+Limits: it copies by size and count, not by checksum. It does not move your originals; you
+remove them yourself once you have checked the copy (through the Recycle Bin).
 
 ---
 
@@ -887,6 +937,19 @@ jhelp findtext
 jhelp -All
 ```
 
+**`handoff`** (both accounts)  
+Move a folder or file between the two accounts through a private temporary folder: send in one account, receive in the other. Preview first; verifies the copy; cleans up.
+
+```powershell
+handoff send "$HOME\Documents\Some Folder"
+handoff send "$HOME\Documents\Some Folder" -Apply
+handoff receive "Some Folder"
+handoff receive "Some Folder" -To "$HOME\Documents\UC-Merced\Teaching" -Apply
+handoff status
+handoff clear "Some Folder"
+```
+Note: Never changes originals, never overwrites, never carries research-sensitive or finance/identity names, leaves databases/rosters/grades behind unless -IncludeData. The temporary folder is private to the jidem and makin accounts and is checked every time.
+
 
 ### Jump commands
 
@@ -989,6 +1052,8 @@ Also check the prompt. You may be in the wrong account.
 | "The tracker isn't counting this file" | Not an error: a question | Choose Track, or Time it without tracking. |
 | `sortdownloads` says nothing to sort | Everything is recent, sensitive-named, media or cloud-only | Check the "left where they are" counts; use `-Days`, `-ShowNames` or `-IncludeMedia` after checking. |
 | `auditpc` takes a long time | Large drive; it counts files | Let it finish, or scan one place: `auditpc -Root "C:\Github"`. |
+| `handoff` says the folder is not private | The temporary folder has broader permissions than jidem, makin and SYSTEM | Nothing was copied. Delete `Shared\_handoff-private` (it is temporary) and send again; it recreates it with the right permissions. |
+| `handoff receive` says it was sent from this account | You are in the sending account | Switch to the other account (check the prompt) |
 | `syncwords` says 0 session log files | No timed session in this account's folders yet | Write one timed session, then run it again. |
 | "writing-log.csv has the older column layout" | The first version of the file | Rename it to `writing-log-old.csv` and rerun. |
 | LTeX "could not run ltex-ls with Java" | Slow Java start or an old LTeX fork | Use `ltex-plus`, update Java, restart VS Code fully. |
@@ -1077,6 +1142,7 @@ the Recycle Bin, yourself.
 |---|---|
 | v1.0.0 | The frozen architecture: Phases 1 to 12 and `repair`. |
 | v1.1.0 | Additive: `Jidem.WritingLog.ps1` (`syncwords`, `wordsum`, `logwords`, `countwords`), `coursework` jump command, desk actions for `syncwords` and `wordsum`. |
+| v1.3.0 | `Jidem.Accounts.ps1`: the account prompt and `handoff` (private cross-account copy) |
 | v1.2.0 | `Jidem.Sort.ps1` (`sortdownloads`, `sortundo`): the one command that moves files, narrowly amended into the contract. `Jidem.Audit.ps1` (`auditpc`): report-only map of where files live. |
 | Writing Timer 1.6.0 | Session modes, typed-versus-pasted tally, AI-use note, local dates and offsets, 30/45-minute presets, Ctrl+Alt+W, `warnWhenUntracked`. Save & Push now defaults to your last session note. |
 

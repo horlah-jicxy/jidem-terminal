@@ -1,4 +1,4 @@
-# JIDEM TERMINAL - Architecture (FROZEN at v1.0.0; amended at v1.1.0 and v1.2.0, see section 8)
+# JIDEM TERMINAL - Architecture (FROZEN at v1.0.0; amended at v1.1.0, v1.2.0 and v1.3.0, see section 8)
 
 This document is the contract. Day-to-day work happens *inside* it; changing the contract itself is a deliberate,
 rare act (see "Changing the contract").
@@ -47,7 +47,8 @@ Course folders live in `TA\` (not `Courses\`). Past courses are added with `cour
 13 Jidem.WritingLog.ps1    v1.1.0, after Help (syncwords, wordsum, logwords, countwords)
 14 Jidem.Sort.ps1          v1.2.0, after Help (sortdownloads, sortundo)
 15 Jidem.Audit.ps1         v1.2.0, after Help (auditpc, report-only)
-16 Jidem.Dashboard.ps1     ALWAYS LAST
+16 Jidem.Accounts.ps1      v1.3.0, after Help (the account prompt, handoff)
+17 Jidem.Dashboard.ps1     ALWAYS LAST
 ```
 Naming: `Jidem.<Area>.ps1`; globals `$Global:Jidem*`; helper functions `*-Jidem*`. Core loads before everything but the legacy base.
 
@@ -87,3 +88,4 @@ Naming: `Jidem.<Area>.ps1`; globals `$Global:Jidem*`; helper functions `*-Jidem*
 | v1.1.0 | `Jidem.WritingLog.ps1`; `coursework` jump command; desk actions for `syncwords` and `wordsum`; `writing-log.csv` in Shared (numbers only) | Additive. Only appends to one CSV; never overwrites, edits or deletes. |
 | v1.2.0 | `Jidem.Sort.ps1` (`sortdownloads`, `sortundo`) | A deliberate, narrow amendment of invariant 2. Moves files only on `-Apply` after a preview and a y/n, within the user's own Documents, and is reversible from its manifest. It never reads inside a file. |
 | v1.2.0 | `Jidem.Audit.ps1` (`auditpc`) | Additive and report-only: reads names, sizes and dates, never opens, moves, copies or deletes anything. |
+| v1.3.0 | `Jidem.Accounts.ps1`: the `prompt` shows the account; `handoff` carries files between accounts | The prompt only displays. `handoff` copies (never moves, renames or deletes your originals), only on `-Apply` after a preview, through `Shared\_handoff-private`, a temporary folder restricted to the jidem and makin accounts and re-checked on every use, removed after the receiver verifies the copy. It never carries research-sensitive or finance/identity names, and leaves databases, rosters and grades behind unless asked. This is a second narrow, documented use of `Shared` besides `writing-log.csv`. |

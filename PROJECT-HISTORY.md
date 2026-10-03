@@ -131,6 +131,12 @@ Your goals, in your own order of priority:
   Documents, `C:\`) with counts, sizes, ages and a suggestion per folder, never opening a
   file. It is the report that decides what to migrate, sort or leave, one folder at a time.
 
+- **Account prompt and handoff (v1.3.0):** about seven of the build's errors came from not
+  knowing which account a window belonged to, and every transfer between accounts repeated
+  the same eight steps. The prompt now shows `[JIDEM]` or `[MAKIN]` (red warning in the other
+  account's folder), and `handoff send / receive` does the private, verified, cleaned-up
+  copy in two commands. It never changes originals.
+
 ---
 
 ## 5. What exists now
@@ -155,6 +161,7 @@ Your goals, in your own order of priority:
 | `Jidem.WritingLog.ps1` | v1.1.0 | syncwords, wordsum, logwords, countwords |
 | `Jidem.Sort.ps1` | v1.2.0 | sortdownloads, sortundo (the one command that moves files) |
 | `Jidem.Audit.ps1` | v1.2.0 | auditpc (report-only map of where files live) |
+| `Jidem.Accounts.ps1` | v1.3.0 | the account prompt; handoff (send, receive, status, clear) |
 
 Documents: `README.md`, `ARCHITECTURE.md` (the frozen contract), `WRITING-PRACTICE.md`,
 and this file.

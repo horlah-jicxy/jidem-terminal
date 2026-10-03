@@ -1,4 +1,4 @@
-# JIDEM TERMINAL  (architecture frozen at v1.0.0 - see ARCHITECTURE.md; v1.1.0 adds the shared word count, v1.2.0 adds sorting and the computer audit)
+# JIDEM TERMINAL  (architecture frozen at v1.0.0 - see ARCHITECTURE.md; v1.1.0 adds the shared word count, v1.2.0 adds sorting and the computer audit, v1.3.0 adds the account prompt and handoff)
 
 New here? Read `USER-MANUAL.md`. For how it was built and what each mistake taught, read `PROJECT-HISTORY.md`.
 
@@ -30,6 +30,7 @@ running in (from the profile folder name) and either does its job or says which 
 | `Jidem.WritingLog.ps1` | v1.1.0 | both | `syncwords` `wordsum` `logwords` `countwords`: a shared daily word count (numbers only) in `Shared\writing-log.csv`. Load after Help, before Dashboard. |
 | `Jidem.Sort.ps1` | v1.2.0 | both | `sortdownloads` `sortundo`: sort a loose pile (Downloads) into `Documents\Archive` by type and year. Preview first; never reads inside files; the one command that moves files. Load after Help, before Dashboard. |
 | `Jidem.Audit.ps1` | v1.2.0 | both | `auditpc`: report-only map of where your files live (folders under your profile, OneDrive, Documents, C:\) with size, age, main file types and a suggestion. Never opens, moves or deletes anything; prints folder names and counts only. Load after Help, before Dashboard. |
+| `Jidem.Accounts.ps1` | v1.3.0 | both | The prompt shows `[JIDEM]` or `[MAKIN]` (with a red warning if you are in the other account's folder), and `handoff send / receive / status / clear` moves folders between the accounts through a private temporary folder. Load after Help, before Dashboard. |
 | `Jidem.Dashboard.ps1` | 10 | both | `dashboard` / `desk`: JIDEM academic desk, MAKIN teaching desk. **Load last.** |
 
 ## Profile (`$PROFILE`, in OneDrive\Documents\WindowsPowerShell)
@@ -52,10 +53,11 @@ JIDEM:
 . "$HOME\PowerShell\Jidem.WritingLog.ps1"
 . "$HOME\PowerShell\Jidem.Sort.ps1"
 . "$HOME\PowerShell\Jidem.Audit.ps1"
+. "$HOME\PowerShell\Jidem.Accounts.ps1"
 . "$HOME\PowerShell\Jidem.Dashboard.ps1"
 ```
 
-MAKIN: the same, without `Projects` and `Academia`, and with `Jidem.Teaching.ps1` (after Maintenance/Writing, before Health); `Jidem.WritingLog.ps1`, `Jidem.Sort.ps1` and `Jidem.Audit.ps1` go after Help in both.
+MAKIN: the same, without `Projects` and `Academia`, and with `Jidem.Teaching.ps1` (after Maintenance/Writing, before Health); `Jidem.WritingLog.ps1`, `Jidem.Sort.ps1`, `Jidem.Audit.ps1` and `Jidem.Accounts.ps1` go after Help in both.
 
 ## Rules the whole system follows
 
