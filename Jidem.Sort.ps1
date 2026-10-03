@@ -6,7 +6,7 @@
 #     . "$HOME\PowerShell\Jidem.Sort.ps1"
 #
 # Commands:
-#   sortdownloads [-Path <folder>] [-Days 14] [-Apply] [-Yes] [-IncludeMedia] [-ShowNames] [-WhatIf]
+#   sortdownloads [-Path <folder>] [-Days 14] [-Apply] [-Yes] [-IncludeMedia] [-ShowNames] [-FilesOnly] [-WhatIf]
 #                      PREVIEW by default. Sorts loose files in Downloads (or another pile such as
 #                      Desktop) by file TYPE and ARRIVAL YEAR into
 #                      Documents\Archive\<folder name>\<Category>\<Year>\
@@ -19,7 +19,7 @@
 # This is the one command that MOVES files, so it is deliberately cautious:
 #   - preview unless you add -Apply, and even then it asks y/n (unless -Yes)
 #   - never overwrites (a name clash gets "(2)"), never deletes
-#   - top-level files and folders only; folders move intact, never emptied out
+#   - top-level files and folders only; folders move intact, never emptied out (-FilesOnly leaves ALL folders alone)
 #   - leaves alone: anything changed in the last -Days days, partial downloads, cloud-only
 #     OneDrive placeholders, audio and video (unless -IncludeMedia), and anything whose name
 #     matches $Global:JidemSortKeep (interviews, Zoom, transcripts, consent forms, IRB, ...)
@@ -34,7 +34,7 @@ foreach ($need in 'Write-JidemBanner', 'Write-JidemFooter') {
 }
 
 # Names (case-insensitive) that are NEVER moved. Research-sensitive material stays where it is.
-$Global:JidemSortKeep = 'zoom|interview|transcript|consent|\birb\b|participant|fieldnote|taguette|houston|recording'
+$Global:JidemSortKeep = 'zoom|interview|transcript|consent|\birb\b|participant|fieldnote|taguette|houston|recording|pdfgear'
 
 $Global:JidemSortLogs = Join-Path $HOME 'PowerShell\sort-logs'
 
@@ -107,7 +107,8 @@ function sortdownloads {
         [switch]$Apply,
         [switch]$Yes,
         [switch]$IncludeMedia,
-        [switch]$ShowNames
+        [switch]$ShowNames,
+        [switch]$FilesOnly
     )
     if (-not $Path) { $Path = Get-JidemDownloadsPath }
     if (-not (Test-Path -LiteralPath $Path -PathType Container)) {
@@ -145,6 +146,7 @@ function sortdownloads {
         $year = $arrived.ToString('yyyy')
 
         if ($item.PSIsContainer) {
+            if ($FilesOnly) { $left['folder (recent or hidden)']++; [void]$leftNames.Add("folder (left by -FilesOnly): $name"); continue }
             if ($name.StartsWith('.')) { $left['folder (recent or hidden)']++; [void]$leftNames.Add("folder (hidden): $name"); continue }
             if ($name -match $Global:JidemSortKeep) { $left['sensitive name']++; [void]$leftNames.Add("sensitive name: $name"); continue }
             if ($arrived -gt $cutoff) { $left['folder (recent or hidden)']++; [void]$leftNames.Add("folder (recent): $name"); continue }
@@ -301,6 +303,6 @@ function sortundo {
 }
 
 if (Get-Command Add-JidemHelp -ErrorAction SilentlyContinue) {
-    Add-JidemHelp 'Maintenance' @('sortdownloads') 'ANY' 'Sort a loose pile (Downloads by default) into Documents\Archive by file type and arrival year. Preview first; counts only, never reads inside files.' @('sortdownloads', 'sortdownloads -Days 30 -ShowNames', 'sortdownloads -Apply', 'sortdownloads -Path "$HOME\Desktop"') 'The one command that moves files. Preview unless -Apply, then asks y/n. Never overwrites or deletes. Leaves recent files, partial downloads, cloud-only files, audio/video (unless -IncludeMedia) and names matching $Global:JidemSortKeep (interview, Zoom, transcript, consent, IRB ...). Folders move intact. Writes a manifest to $HOME\PowerShell\sort-logs.'
+    Add-JidemHelp 'Maintenance' @('sortdownloads') 'ANY' 'Sort a loose pile (Downloads by default) into Documents\Archive by file type and arrival year. Preview first; counts only, never reads inside files.' @('sortdownloads', 'sortdownloads -Days 30 -ShowNames', 'sortdownloads -Apply', 'sortdownloads -Path "$HOME\Desktop" -FilesOnly') 'The one command that moves files. Preview unless -Apply, then asks y/n. Never overwrites or deletes. Leaves recent files, partial downloads, cloud-only files, audio/video (unless -IncludeMedia) and names matching $Global:JidemSortKeep (interview, Zoom, transcript, consent, IRB ...). Folders move intact. Writes a manifest to $HOME\PowerShell\sort-logs.'
     Add-JidemHelp 'Maintenance' @('sortundo') 'ANY' 'List past sorts, or put the files from one sort back where they were.' @('sortundo', 'sortundo sort-20261002-101500-123.csv -Apply') 'Preview unless -Apply. Skips anything that has moved again or whose original name is now taken.'
 }
